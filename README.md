@@ -3,13 +3,13 @@
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/mohs-projects-980c85c9/v0-ai-dev-platform)
 [![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/hDNyN7ZVWk2)
 
-> **X + Bilibili + Truth Social + ProductHunt** combined into one AI-native platform for African developers, traders, and entrepreneurs.
+> AI-native platform for African developers, traders, and entrepreneurs.
 
 ---
 
 ## Philosophy: BOBO
 
-- **B**uild - Own your stack, no vendor lock-in
+- **B**uild - Own your stack, Match your user reality.
 - **O**wn - Data sovereignty for Africa  
 - **B**ootstrap - Revenue-first, sustainable growth
 - **O**perate - Self-sufficient infrastructure

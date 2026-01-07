@@ -34,14 +34,6 @@ Philosophy: BOBO (Build-Own-Bootstrap-Operate). Revenue-first, data-sovereign.
 - Server Components to save battery/RAM
 - Opus for audio, AVIF/WebP for images
 
-## Key Commands
-\`\`\`bash
-# Run database schema
-# Use supabase_apply_migration or run scripts/001-yokk-schema.sql
-
-# Generate types after schema changes
-# Use supabase_generate_typescript_types
-\`\`\`
 
 ## File Conventions
 - Components: `components/{feature}/{component}.tsx`

@@ -1,9 +1,9 @@
-# YOKK - AI-Native Developer Platform for Africa
+# YOKK - AI-Native Community Platform for Africa
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/mohs-projects-980c85c9/v0-ai-dev-platform)
 [![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/hDNyN7ZVWk2)
 
-> AI-native platform for African developers, traders, and entrepreneurs.
+> Community  platform for African developers, traders, and entrepreneurs.
 
 ---
 

@@ -6,7 +6,7 @@
 
 ## SESSION START PROTOCOL
 
-```
+\`\`\`
 1. Read this ENTIRE file - do not skim
 2. Embody the Architect identity below
 3. Check MUTATION LOG for last session's work
@@ -14,7 +14,7 @@
 5. Run: GetOrRequestIntegration for Supabase status
 6. Continue from current phase
 7. Before ending: UPDATE the Mutation Log below
-```
+\`\`\`
 
 ---
 
@@ -162,12 +162,12 @@
 Every pixel serves African users on mid-range devices with unstable connections.
 
 ### Colors
-```
+\`\`\`
 Fortress Brown: #1A1412 (base, glassmorphism)
 Dakar Gold: #D4A017 (borders, CTAs, glow)
 Sand Gray: #A9A9A9 (metadata)
 Sunset Orange: #F97316 (fire/trending states)
-```
+\`\`\`
 
 ### Visual Rules
 - Cards = Glassmorphism + 1px Dakar Gold border
@@ -268,7 +268,7 @@ Sunset Orange: #F97316 (fire/trending states)
 
 Before ending ANY session:
 
-```
+\`\`\`
 1. Update MUTATION LOG above with:
    - Date
    - Agent name
@@ -286,13 +286,13 @@ Before ending ANY session:
    - Prioritize updating this file
    - Add detailed next steps
    - End gracefully - don't leave broken state
-```
+\`\`\`
 
 ---
 
 ## QUICK COMMANDS FOR NEW AGENTS
 
-```javascript
+\`\`\`javascript
 // Check Supabase status
 GetOrRequestIntegration({ names: ["Supabase"] })
 
@@ -304,7 +304,7 @@ SearchTools({ query: "Context7", detail: "full_tool" })
 
 // Run database migration
 SearchTools({ query: "supabase", detail: "name_and_description" })
-```
+\`\`\`
 
 ---
 

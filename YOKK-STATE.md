@@ -3,9 +3,9 @@
 
 ## Quick Resume Prompt
 Copy this to resume with any AI:
-```
+\`\`\`
 I'm building YOKK - an AI-native dev platform for Africans. Stack: Next.js 15 + Supabase + PowerSync + Vercel AI SDK. Theme: "Sunset over Dakar" (Fortress Brown #1A1412, Dakar Gold #D4A017). Read YOKK-STATE.md and GEMINI.md for full context, then continue from the "Next Tasks" section.
-```
+\`\`\`
 
 ## Completed Features
 - [x] Database schema (scripts/001-yokk-schema.sql) - NOT YET EXECUTED
@@ -51,12 +51,12 @@ I'm building YOKK - an AI-native dev platform for Africans. Stack: Next.js 15 + 
 | `components/voice/*` | Voice recording |
 
 ## Design Tokens
-```css
+\`\`\`css
 --fortress-brown: #1A1412
 --dakar-gold: #D4A017
 --sand-gray: #A9A9A9
 --sunset-orange: #FF6B35
-```
+\`\`\`
 
 ## Environment Variables Needed
 - SUPABASE_URL ✓

@@ -1,0 +1,55 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# TypeScript
+tsconfig.tsbuildinfo
+
+# PowerSync & Local SQLite
+# Prevents syncing your local development database to the cloud
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+yokk_unified.db
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDEs & Tools
+.vscode/
+.idea/
+.claude/
+.history/
+*.log
+
+# YOKK Specific
+/nul
+yokk.log
+MIGRATION_LOG.md

@@ -1,0 +1,258 @@
+{
+  "name": "NJOOBA - RSS Feed Aggregator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://dev.to/feed/tag/africa",
+        "options": {}
+      },
+      "id": "rss-devto-africa",
+      "name": "Dev.to - Africa Tag",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [450, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://techpoint.africa/feed/",
+        "options": {}
+      },
+      "id": "rss-techpoint",
+      "name": "Techpoint Africa",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://africanews24-7.com/feed/",
+        "options": {}
+      },
+      "id": "rss-african-tech",
+      "name": "African Tech News",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [450, 400]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex"
+      },
+      "id": "merge-feeds",
+      "name": "Merge All Feeds",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter and transform RSS items\nconst items = $input.all();\nconst filtered = [];\n\nfor (const item of items) {  \n  const data = item.json;\n  \n  // Skip if no title or content\n  if (!data.title || (!data.content && !data.description)) {\n    continue;\n  }\n  \n  // Extract and clean data\n  const title = data.title.trim();\n  const content = (data.content || data.description || '').trim();\n  const link = data.link || data.url;\n  \n  // Determine category from keywords\n  let category = 'general';\n  const lowerTitle = title.toLowerCase();\n  const lowerContent = content.toLowerCase();\n  \n  if (lowerTitle.includes('startup') || lowerContent.includes('funding')) {\n    category = 'startups';\n  } else if (lowerTitle.includes('tutorial') || lowerTitle.includes('how to')) {\n    category = 'tutorials';\n  } else if (lowerTitle.includes('job') || lowerTitle.includes('hiring')) {\n    category = 'jobs';\n  } else if (lowerTitle.includes('event') || lowerTitle.includes('conference')) {\n    category = 'events';\n  }\n  \n  // Extract tags\n  const tags = data.categories || [];\n  if (!tags.includes('rss')) tags.push('rss');\n  if (!tags.includes('aggregated')) tags.push('aggregated');\n  \n  // Build enriched item\n  filtered.push({\n    json: {\n      title: title,\n      content: content.substring(0, 5000), // Limit content length\n      category: category,\n      tags: tags,\n      image_url: data.enclosure?.url || data['media:thumbnail']?.url || null,\n      source_url: link,\n      published_at: data.isoDate || data.pubDate || new Date().toISOString()\n    }\n  });\n}\n\nreturn filtered;"
+      },
+      "id": "transform-data",
+      "name": "Filter & Transform",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-workflow-type",
+              "value": "rss-feed"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"workflowType\": \"rss-feed\",\n  \"items\": {{ $json }}\n}",
+        "options": {}
+      },
+      "id": "webhook-send",
+      "name": "Send to NJOOBA Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.success}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "check-success",
+      "name": "Check Response",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "message": "✅ RSS Feed Sync Complete\\n\\nInserted: {{$json.inserted}} posts",
+        "options": {}
+      },
+      "id": "success-log",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1450, 200]
+    },
+    {
+      "parameters": {
+        "message": "❌ RSS Feed Sync Failed\\n\\nError: {{$json.error}}",
+        "options": {}
+      },
+      "id": "error-log",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1450, 400]
+    }
+  ],
+  "connections": {
+    "Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Dev.to - Africa Tag",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Techpoint Africa",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "African Tech News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dev.to - Africa Tag": {
+      "main": [
+        [
+          {
+            "node": "Merge All Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Techpoint Africa": {
+      "main": [
+        [
+          {
+            "node": "Merge All Feeds",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "African Tech News": {
+      "main": [
+        [
+          {
+            "node": "Merge All Feeds",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge All Feeds": {
+      "main": [
+        [
+          {
+            "node": "Filter & Transform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter & Transform": {
+      "main": [
+        [
+          {
+            "node": "Send to NJOOBA Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to NJOOBA Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Response": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-11-26T03:35:00.000Z",
+  "versionId": "1"
+}

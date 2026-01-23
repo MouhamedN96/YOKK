@@ -1,0 +1,50 @@
+gemini extensions install https://github.com/gitremko/Gemini_cli_notion_extention
+
+gemini extensions install https://github.com/choicely/choicely-gemini-cli-extension
+
+gemini extensions install https://github.com/redis/mcp-redis
+
+gemini extensions install https://github.com/qodo-ai/open-aware
+
+gemini extensions install https://github.com/gemini-cli-extensions/nanobanana
+
+gemini extensions install https://github.com/huggingface/skills
+
+gemini extensions install https://github.com/supabase-community/supabase-mcp
+
+gemini extensions install https://github.com/upstash/context7
+
+gemini extensions install https://github.com/gemini-cli-extensions/sql-server
+
+gemini extensions install https://github.com/github/github-mcp-server
+
+gemini extensions install https://github.com/ChromeDevTools/chrome-devtools-mcp
+
+npx add-skill coreyhaines31/marketingskills
+
+gemini extensions install https://github.com/gemini-cli-extensions/security
+
+gemini extensions install https://github.com/gemini-cli-extensions/jules
+
+gemini extensions install https://github.com/gemini-cli-extensions/workspace
+
+gemini extensions install https://github.com/huggingface/hf-mcp-server
+
+gemini extensions install https://github.com/e2e-test-quest/uuv
+
+gemini extensions install https://github.com/googlemaps/platform-ai
+
+gemini extensions install https://github.com/gplasky/gemini-cli-blueprint-extension
+
+gemini extensions install https://github.com/AsyncFuncAI/ralph-wiggum-extension
+
+gemini extensions install https://github.com/automateyournetwork/GeminiCLI_Vision_Extension
+
+gemini extensions install https://github.com/gemini-cli-extensions/stitch
+
+gemini extensions install https://github.com/automateyournetwork/GeminiCLI_File_Search_Extension
+
+
+gemini extensions install https://github.com/apify/agent-skills
+
+gemini extensions install https://github.com/canva-sdks/canva-gemini-extension

@@ -1,0 +1,335 @@
+{
+  "name": "NJOOBA - RSS Feed Aggregator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://techcabal.com/rss",
+        "options": {}
+      },
+      "id": "rss-techcabal",
+      "name": "TechCabal",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [450, 100]
+    },
+    {
+      "parameters": {
+        "url": "https://techpoint.africa/feed/",
+        "options": {}
+      },
+      "id": "rss-techpoint",
+      "name": "Techpoint Africa",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [450, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://disrupt-africa.com/feed/",
+        "options": {}
+      },
+      "id": "rss-disrupt",
+      "name": "Disrupt Africa",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://benjamindada.com/feed/",
+        "options": {}
+      },
+      "id": "rss-benjamin",
+      "name": "Benjamin Dada",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [450, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://dev.to/feed/tag/africa",
+        "options": {}
+      },
+      "id": "rss-devto",
+      "name": "Dev.to - Africa",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [450, 500]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex"
+      },
+      "id": "merge-feeds",
+      "name": "Merge All Feeds",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter and transform RSS items for NJOOBA\nconst items = $input.all();\nconst filtered = [];\n\nfor (const item of items) {  \n  const data = item.json;\n  \n  // Skip if no title or content\n  if (!data.title || (!data.content && !data.description)) {\n    continue;\n  }\n  \n  // Extract and clean data\n  const title = data.title.trim().substring(0, 500);\n  const description = (data.description || '').trim().substring(0, 5000);\n  const content = (data.content || data.description || '').trim().substring(0, 5000);\n  const link = data.link || data.url;\n  \n  // Determine category from keywords\n  let category = 'general';\n  const lowerTitle = title.toLowerCase();\n  const lowerContent = (content || description).toLowerCase();\n  \n  if (lowerTitle.includes('startup') || lowerContent.includes('funding') || lowerContent.includes('raised')) {\n    category = 'startups';\n  } else if (lowerTitle.includes('tutorial') || lowerTitle.includes('how to') || lowerTitle.includes('guide')) {\n    category = 'tutorials';\n  } else if (lowerTitle.includes('job') || lowerTitle.includes('hiring') || lowerTitle.includes('career')) {\n    category = 'jobs';\n  } else if (lowerTitle.includes('event') || lowerTitle.includes('conference') || lowerTitle.includes('summit')) {\n    category = 'events';\n  }\n  \n  // Extract tags\n  let tags = [];\n  if (Array.isArray(data.categories)) {\n    tags = data.categories.map(c => String(c).toLowerCase().trim()).slice(0, 5);\n  }\n  tags.push('rss-aggregated');\n  \n  // Extract image\n  let imageUrl = null;\n  if (data.enclosure?.url) imageUrl = data.enclosure.url;\n  else if (data['media:thumbnail']?.$?.url) imageUrl = data['media:thumbnail'].$.url;\n  else if (data['media:content']?.$?.url) imageUrl = data['media:content'].$.url;\n  \n  // Build enriched item\n  filtered.push({\n    json: {\n      title: title,\n      description: description,\n      content: content,\n      category: category,\n      tags: tags,\n      image_url: imageUrl,\n      source_url: link,\n      published_at: data.isoDate || data.pubDate || new Date().toISOString()\n    }\n  });\n}\n\nreturn filtered;"
+      },
+      "id": "transform-data",
+      "name": "Filter & Transform",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate HMAC-SHA256 signature for webhook security\nconst crypto = require('crypto');\nconst items = $input.all();\n\nconst webhookSecret = 'n8n-njooba-secure-webhook-2025';\nconst payload = {\n  workflowType: 'rss-feed',\n  items: items.map(i => i.json)\n};\n\nconst bodyString = JSON.stringify(payload);\nconst signature = crypto\n  .createHmac('sha256', webhookSecret)\n  .update(bodyString, 'utf-8')\n  .digest('hex');\n\nreturn [{\n  json: {\n    payload: payload,\n    signature: signature,\n    bodyString: bodyString\n  }\n}];"
+      },
+      "id": "generate-signature",
+      "name": "Generate HMAC Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://njooba.com/api/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-n8n-signature",
+              "value": "={{ $json.signature }}"
+            },
+            {
+              "name": "x-workflow-type",
+              "value": "rss-feed"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.bodyString }}",
+        "options": {}
+      },
+      "id": "webhook-send",
+      "name": "Send to NJOOBA Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.success}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "check-success",
+      "name": "Check Response",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "message": "✅ RSS Feed Sync Complete - Inserted: {{$json.inserted}} posts",
+        "options": {}
+      },
+      "id": "success-log",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1650, 200]
+    },
+    {
+      "parameters": {
+        "message": "❌ RSS Feed Sync Failed - Error: {{$json.error}}",
+        "options": {}
+      },
+      "id": "error-log",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1650, 400]
+    }
+  ],
+  "connections": {
+    "Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "TechCabal",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Techpoint Africa",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Disrupt Africa",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Benjamin Dada",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Dev.to - Africa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TechCabal": {
+      "main": [
+        [
+          {
+            "node": "Merge All Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Techpoint Africa": {
+      "main": [
+        [
+          {
+            "node": "Merge All Feeds",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Disrupt Africa": {
+      "main": [
+        [
+          {
+            "node": "Merge All Feeds",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Benjamin Dada": {
+      "main": [
+        [
+          {
+            "node": "Merge All Feeds",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Dev.to - Africa": {
+      "main": [
+        [
+          {
+            "node": "Merge All Feeds",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge All Feeds": {
+      "main": [
+        [
+          {
+            "node": "Filter & Transform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter & Transform": {
+      "main": [
+        [
+          {
+            "node": "Generate HMAC Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HMAC Signature": {
+      "main": [
+        [
+          {
+            "node": "Send to NJOOBA Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to NJOOBA Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Response": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0
+}

@@ -19,8 +19,36 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  typescript: {
+    // Type checking done in CI, skip during build to save memory
+    ignoreBuildErrors: true,
+  },
+  // Disable source maps in production to reduce memory usage
+  productionBrowserSourceMaps: false,
+  // Reduce build memory usage
+  swcMinify: true,
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+    optimizePackageImports: ['lucide-react', 'framer-motion', '@powersync/web'],
+  },
+  // Webpack config for memory optimization
+  webpack: (config, { isServer }) => {
+    // Reduce memory usage during build
+    config.optimization = {
+      ...config.optimization,
+      moduleIds: 'deterministic',
+      splitChunks: {
+        chunks: 'all',
+        maxSize: 200000, // 200KB chunks max
+      },
+    }
+
+    // Handle WASM files for PowerSync
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+    }
+
+    return config
   },
   async headers() {
     return [

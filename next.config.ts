@@ -27,25 +27,30 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
   // Reduce build memory usage
   swcMinify: true,
+  // Memory optimization for Vercel
+  outputFileTracingExcludes: {
+    '*': [
+      'node_modules/@swc/core-linux-x64-gnu',
+      'node_modules/@swc/core-linux-x64-musl',
+      'node_modules/@esbuild/linux-x64',
+    ],
+  },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', '@powersync/web'],
+    // Reduce memory pressure during build
+    webpackMemoryOptimizations: true,
   },
   // Webpack config for memory optimization
   webpack: (config, { isServer }) => {
-    // Reduce memory usage during build
-    config.optimization = {
-      ...config.optimization,
-      moduleIds: 'deterministic',
-      splitChunks: {
-        chunks: 'all',
-        maxSize: 200000, // 200KB chunks max
-      },
-    }
-
     // Handle WASM files for PowerSync
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
+    }
+
+    // Reduce memory during build - don't override splitChunks
+    if (!isServer) {
+      config.optimization.moduleIds = 'deterministic'
     }
 
     return config
@@ -64,7 +69,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://lyhfeqejktubykgjzjtj.supabase.co wss://lyhfeqejktubykgjzjtj.supabase.co https://n8n.njooba.com",
+              "connect-src 'self' https://mszpwskawqeljizftyeo.supabase.co wss://mszpwskawqeljizftyeo.supabase.co https://n8n.njooba.com https://*.posthog.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

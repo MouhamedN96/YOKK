@@ -216,6 +216,28 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Category slug to UUID mapping cache
+let categoryCache: Map<string, string> | null = null
+
+async function getCategoryId(categorySlug: string): Promise<string | null> {
+  // Load cache if needed
+  if (!categoryCache) {
+    categoryCache = new Map()
+    const { data: categories } = await supabaseAdmin
+      .from('categories')
+      .select('id, slug, name')
+
+    if (categories) {
+      for (const cat of categories) {
+        categoryCache.set(cat.slug.toLowerCase(), cat.id)
+        categoryCache.set(cat.name.toLowerCase(), cat.id)
+      }
+    }
+  }
+
+  return categoryCache.get(categorySlug.toLowerCase()) || null
+}
+
 // Handler for RSS feed aggregation
 async function handleRSSFeed(data: any) {
   const { items } = data
@@ -253,15 +275,21 @@ async function handleRSSFeed(data: any) {
         continue // Skip duplicates
       }
 
-      // Insert post
+      // Map category string to UUID
+      const categoryId = validatedItem.category
+        ? await getCategoryId(validatedItem.category)
+        : null
+
+      // Insert post (matching actual schema)
       const { error } = await supabaseAdmin.from('posts').insert({
         title: sanitizedTitle,
         content: sanitizedContent,
-        category: validatedItem.category || 'news',
-        tags: validatedItem.tags || [],
+        type: 'article',
+        category_id: categoryId,
         image_url: validatedItem.image_url || null,
-        author_id: process.env.N8N_BOT_USER_ID!,
+        user_id: process.env.N8N_BOT_USER_ID!,
         is_featured: false,
+        is_fire: false,
       })
 
       if (error) {
@@ -294,6 +322,7 @@ async function handleGitHubTrending(data: any) {
   }
 
   let insertedCount = 0
+  const devtoolsCategoryId = await getCategoryId('devtools')
 
   for (const repo of repositories) {
     try {
@@ -301,15 +330,15 @@ async function handleGitHubTrending(data: any) {
 
       const title = sanitizeContent(`${repo.name} - ${repo.description}`)
       const content = sanitizeContent(`
-🔥 Trending Repository
+Trending Repository
 
 **${repo.name}** by ${repo.owner || 'Unknown'}
 
 ${repo.description}
 
-⭐ Stars: ${repo.stars || 0}
-🍴 Forks: ${repo.forks || 0}
-🏷️ Language: ${repo.language || 'N/A'}
+Stars: ${repo.stars || 0}
+Forks: ${repo.forks || 0}
+Language: ${repo.language || 'N/A'}
 
 [View on GitHub](${repo.url})
       `.trim())
@@ -317,11 +346,12 @@ ${repo.description}
       const { error } = await supabaseAdmin.from('posts').insert({
         title,
         content,
-        category: 'projects',
-        tags: ['github', 'trending', repo.language?.toLowerCase()].filter(Boolean),
+        type: 'article',
+        category_id: devtoolsCategoryId,
         image_url: null,
-        author_id: process.env.N8N_BOT_USER_ID!,
+        user_id: process.env.N8N_BOT_USER_ID!,
         is_featured: (repo.stars || 0) > 1000,
+        is_fire: (repo.stars || 0) > 5000,
       })
 
       if (!error) insertedCount++
@@ -345,6 +375,7 @@ async function handleDevToSync(data: any) {
   }
 
   let insertedCount = 0
+  const edtechCategoryId = await getCategoryId('edtech')
 
   for (const article of articles) {
     try {
@@ -364,11 +395,12 @@ async function handleDevToSync(data: any) {
         content: sanitizeContent(
           article.description || article.body_markdown?.substring(0, 500) || ''
         ),
-        category: 'tutorials',
-        tags: article.tags || [],
+        type: 'article',
+        category_id: edtechCategoryId,
         image_url: article.cover_image || null,
-        author_id: process.env.N8N_BOT_USER_ID!,
+        user_id: process.env.N8N_BOT_USER_ID!,
         is_featured: (article.positive_reactions_count || 0) > 50,
+        is_fire: (article.positive_reactions_count || 0) > 200,
       })
 
       if (!error) insertedCount++
@@ -389,14 +421,20 @@ async function handleContentPost(data: any) {
     // Validate input
     const validatedData = ContentPostSchema.parse(data)
 
+    // Map category string to UUID
+    const categoryId = validatedData.category
+      ? await getCategoryId(validatedData.category)
+      : null
+
     const { error } = await supabaseAdmin.from('posts').insert({
       title: sanitizeContent(validatedData.title),
       content: sanitizeContent(validatedData.content),
-      category: validatedData.category || 'general',
-      tags: validatedData.tags || [],
+      type: 'post',
+      category_id: categoryId,
       image_url: validatedData.image_url || null,
-      author_id: process.env.N8N_BOT_USER_ID!,
+      user_id: process.env.N8N_BOT_USER_ID!,
       is_featured: false,
+      is_fire: false,
     })
 
     if (error) {

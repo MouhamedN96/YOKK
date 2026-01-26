@@ -1,69 +1,108 @@
-# n8n Workflows for NJOOBA Platform
+# N8N Workflows for YOKK
 
-## Overview
-This directory contains n8n workflow definitions for automating content aggregation and feed management for the NJOOBA platform.
+Automation workflows for content aggregation and syndication.
 
-## Workflows
+## Active Workflows
 
-### 1. **RSS Feed Aggregator** (`rss-aggregator.json`)
-- Fetches developer content from multiple RSS feeds
-- Filters relevant African tech content
-- Enriches with metadata (tags, categories)
-- Posts to Supabase
+### RSS Feed Aggregator (Production)
 
-### 2. **GitHub Trending Monitor** (`github-trending.json`)
-- Monitors GitHub trending repositories
-- Filters by African developers or African tech topics
-- Creates posts in NJOOBA feed
+**Files:**
+- `rss-aggregator-production.json` (importable)
+- `update-payload.json` (API update reference)
 
-### 3. **Dev.to Content Sync** (`devto-sync.json`)
-- Syncs articles from Dev.to with African tech tags
-- Deduplicates existing content
-- Auto-categorizes posts
+**N8N ID:** `SHvMmm0XRjHm0iEA`
+**Schedule:** Every 4 hours
+**Status:** ✅ Active
 
-### 4. **Twitter/X Developer News** (`twitter-monitor.json`)
-- Monitors developer-focused Twitter accounts
-- Filters quality content
-- Creates curated posts
+Aggregates content from 7 African tech RSS feeds:
+- TechCabal
+- Techpoint Africa
+- Disrupt Africa
+- Benjamin Dada
+- Dev.to Africa
+- Technext Nigeria
+- Ventureburn
+
+## Planned Workflows
+
+| Workflow | Description | Status |
+|----------|-------------|--------|
+| GitHub Trending | Monitor trending African repos | Planned |
+| Dev.to Sync | Sync African tech articles | Planned |
+| Twitter/X Monitor | Curate developer tweets | Planned |
+
+---
 
 ## Setup Instructions
 
-### Prerequisites
-- n8n instance running at https://n8n.njooba.com
-- Supabase credentials configured
-- API keys for external services (GitHub, Dev.to, etc.)
+### Step 1: N8N Environment Variable
 
-### Installation
+In your N8N instance (Settings → Variables):
 
-1. **Access n8n dashboard:** https://n8n.njooba.com
-2. **Import workflows:**
-   - Click "Workflows" → "Import from File"
-   - Select workflow JSON files from this directory
-3. **Configure credentials** for each workflow (see below)
-4. **Activate workflows** using the toggle switch
+| Variable | Value |
+|----------|-------|
+| `N8N_WEBHOOK_SECRET` | `0dc8e1fc62d14d5a81984071b80e65bada6f25294b69c258e46664a14a9f57e3` |
 
-## Required Credentials in n8n
+### Step 2: Vercel Environment Variables
 
-### Supabase
-- **Credential Type:** HTTP Header Auth
-- **Name:** `Authorization`
-- **Value:** `Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY`
-- **URL:** `https://lyhfeqejktubykgjzjtj.supabase.co/rest/v1`
+In Vercel (Project → Settings → Environment Variables):
 
-### GitHub (Optional)
-- **Credential Type:** GitHub API
-- **Access Token:** Generate from https://github.com/settings/tokens
+| Variable | Value |
+|----------|-------|
+| `N8N_WEBHOOK_SECRET` | `0dc8e1fc62d14d5a81984071b80e65bada6f25294b69c258e46664a14a9f57e3` |
+| `N8N_BOT_USER_ID` | `f47ac10b-58cc-4372-a567-0e02b2c3d479` |
 
-### Dev.to (Optional)
-- **Credential Type:** Header Auth
-- **API Key:** Get from https://dev.to/settings/extensions
+### Step 3: Supabase Bot User
 
-## Testing Workflows
+Run this SQL in Supabase SQL Editor:
 
-Once credentials are set up, you can test by:
-1. Click "Execute Workflow" button in n8n
-2. Check Supabase `posts` table for new entries
-3. Verify posts appear in NJOOBA feed at http://localhost:3001
+```sql
+INSERT INTO profiles (id, username, display_name, role, onboarding_completed, created_at)
+VALUES (
+  'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+  'yokk_bot',
+  'YOKK Bot',
+  'developer',
+  true,
+  now()
+)
+ON CONFLICT (id) DO NOTHING;
+```
+
+### Step 4: Test the Workflow
+
+1. Go to N8N instance (https://n8n.njooba.com)
+2. Open "YOKK RSS Feed Aggregator - Production"
+3. Click "Execute Workflow" manually
+4. Check Vercel logs for webhook request
+5. Check Supabase `posts` table for new entries
+
+---
+
+## Webhook Endpoint
+
+**URL:** `https://yokk.vercel.app/api/webhooks/n8n`
+**Method:** POST
+**Headers:**
+- `Content-Type: application/json`
+- `x-n8n-signature: <hmac-sha256-signature>`
+- `x-workflow-type: rss-feed`
+
+## Security
+
+- HMAC-SHA256 signature verification
+- Rate limiting (100 requests per hour)
+- Content sanitization (XSS prevention)
+- Service role client for RLS bypass
+
+## Workflow Types Supported
+
+| Type | Description |
+|------|-------------|
+| `rss-feed` | RSS content aggregation |
+| `github-trending` | GitHub trending repos |
+| `devto-sync` | Dev.to article sync |
+| `content-post` | Manual content posting |
 
 ## Monitoring
 
@@ -71,3 +110,7 @@ Check workflow execution logs in n8n:
 - Workflows → Select workflow → Executions tab
 - View success/failure rates
 - Debug any errors
+
+---
+
+*Part of YOKK - Built for Africa's builders*

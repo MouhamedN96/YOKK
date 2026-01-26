@@ -1,0 +1,293 @@
+{
+  "name": "YOKK RSS Feed Aggregator - Production",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every 4 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [200, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://techcabal.com/rss",
+        "options": {}
+      },
+      "id": "rss-techcabal",
+      "name": "TechCabal",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [420, 100]
+    },
+    {
+      "parameters": {
+        "url": "https://techpoint.africa/feed/",
+        "options": {}
+      },
+      "id": "rss-techpoint",
+      "name": "Techpoint Africa",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [420, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://disrupt-africa.com/feed/",
+        "options": {}
+      },
+      "id": "rss-disrupt",
+      "name": "Disrupt Africa",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://benjamindada.com/feed/",
+        "options": {}
+      },
+      "id": "rss-benjamin",
+      "name": "Benjamin Dada",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [420, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://dev.to/feed/tag/africa",
+        "options": {}
+      },
+      "id": "rss-devto",
+      "name": "Dev.to Africa",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [420, 500]
+    },
+    {
+      "parameters": {
+        "url": "https://technext.ng/feed/",
+        "options": {}
+      },
+      "id": "rss-technext",
+      "name": "Technext Nigeria",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [420, 600]
+    },
+    {
+      "parameters": {
+        "url": "https://ventureburn.com/feed/",
+        "options": {}
+      },
+      "id": "rss-ventureburn",
+      "name": "Ventureburn",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [420, 700]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "id": "merge-feeds",
+      "name": "Merge All Feeds",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [660, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter and transform RSS items for YOKK\nconst items = $input.all();\nconst filtered = [];\nconst seenTitles = new Set();\n\nfor (const item of items) {  \n  const data = item.json;\n  \n  // Skip if no title or content\n  if (!data.title || (!data.content && !data.description && !data.contentSnippet)) {\n    continue;\n  }\n  \n  // Extract and clean data\n  const title = data.title.trim().substring(0, 500);\n  \n  // Deduplicate by title\n  if (seenTitles.has(title.toLowerCase())) {\n    continue;\n  }\n  seenTitles.add(title.toLowerCase());\n  \n  const description = (data.contentSnippet || data.description || '').trim().substring(0, 1000);\n  const content = (data.content || data['content:encoded'] || data.description || '').trim().substring(0, 5000);\n  const link = data.link || data.url || data.guid;\n  \n  // Skip if no valid link\n  if (!link) continue;\n  \n  // Determine category from keywords\n  let category = 'news';\n  const lowerTitle = title.toLowerCase();\n  const lowerContent = (content || description).toLowerCase();\n  \n  if (lowerTitle.includes('startup') || lowerContent.includes('funding') || lowerContent.includes('raised') || lowerContent.includes('series')) {\n    category = 'startups';\n  } else if (lowerTitle.includes('tutorial') || lowerTitle.includes('how to') || lowerTitle.includes('guide') || lowerTitle.includes('learn')) {\n    category = 'tutorials';\n  } else if (lowerTitle.includes('job') || lowerTitle.includes('hiring') || lowerTitle.includes('career') || lowerTitle.includes('remote')) {\n    category = 'jobs';\n  } else if (lowerTitle.includes('event') || lowerTitle.includes('conference') || lowerTitle.includes('summit') || lowerTitle.includes('meetup')) {\n    category = 'events';\n  } else if (lowerTitle.includes('fintech') || lowerTitle.includes('payment') || lowerTitle.includes('banking')) {\n    category = 'fintech';\n  }\n  \n  // Extract tags\n  let tags = [];\n  if (Array.isArray(data.categories)) {\n    tags = data.categories.map(c => {\n      if (typeof c === 'string') return c.toLowerCase().trim();\n      if (c._ ) return c._.toLowerCase().trim();\n      return '';\n    }).filter(t => t && t.length < 30).slice(0, 5);\n  }\n  tags.push('rss');\n  \n  // Extract image\n  let imageUrl = null;\n  if (data.enclosure?.url) imageUrl = data.enclosure.url;\n  else if (data['media:thumbnail']?.$?.url) imageUrl = data['media:thumbnail'].$.url;\n  else if (data['media:content']?.$?.url) imageUrl = data['media:content'].$.url;\n  else if (data.image?.url) imageUrl = data.image.url;\n  \n  // Validate image URL\n  if (imageUrl && !imageUrl.startsWith('http')) {\n    imageUrl = null;\n  }\n  \n  filtered.push({\n    json: {\n      title: title,\n      description: description,\n      content: content,\n      category: category,\n      tags: tags,\n      image_url: imageUrl,\n      source_url: link,\n      published_at: data.isoDate || data.pubDate || new Date().toISOString()\n    }\n  });\n}\n\n// Limit to 20 most recent items per run\nreturn filtered.slice(0, 20);"
+      },
+      "id": "transform-data",
+      "name": "Filter & Transform",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\n\nconst items = $input.all();\nconst webhookSecret = $env.N8N_WEBHOOK_SECRET;\n\nif (!webhookSecret) {\n  throw new Error('N8N_WEBHOOK_SECRET environment variable not set');\n}\n\nconst payload = {\n  workflowType: 'rss-feed',\n  items: items.map(i => i.json)\n};\n\nconst bodyString = JSON.stringify(payload);\n\n// Generate HMAC-SHA256 signature\nconst signature = crypto\n  .createHmac('sha256', webhookSecret)\n  .update(bodyString, 'utf-8')\n  .digest('hex');\n\nreturn [{\n  json: {\n    body: payload,\n    signature: signature\n  }\n}];"
+      },
+      "id": "generate-signature",
+      "name": "Generate HMAC Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://yokk.vercel.app/api/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-n8n-signature",
+              "value": "={{ $json.signature }}"
+            },
+            {
+              "name": "x-workflow-type",
+              "value": "rss-feed"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "webhook-send",
+      "name": "Send to YOKK",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-success",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-success",
+      "name": "Check Response",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1540, 400]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "log-success",
+              "name": "status",
+              "value": "={{ 'SUCCESS: Inserted ' + $json.inserted + ' posts' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "success-log",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1760, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "log-error",
+              "name": "status",
+              "value": "={{ 'ERROR: ' + ($json.error || 'Unknown error') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "error-log",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1760, 500]
+    }
+  ],
+  "connections": {
+    "Every 4 Hours": {
+      "main": [
+        [
+          { "node": "TechCabal", "type": "main", "index": 0 },
+          { "node": "Techpoint Africa", "type": "main", "index": 0 },
+          { "node": "Disrupt Africa", "type": "main", "index": 0 },
+          { "node": "Benjamin Dada", "type": "main", "index": 0 },
+          { "node": "Dev.to Africa", "type": "main", "index": 0 },
+          { "node": "Technext Nigeria", "type": "main", "index": 0 },
+          { "node": "Ventureburn", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "TechCabal": {
+      "main": [[{ "node": "Merge All Feeds", "type": "main", "index": 0 }]]
+    },
+    "Techpoint Africa": {
+      "main": [[{ "node": "Merge All Feeds", "type": "main", "index": 1 }]]
+    },
+    "Disrupt Africa": {
+      "main": [[{ "node": "Merge All Feeds", "type": "main", "index": 2 }]]
+    },
+    "Benjamin Dada": {
+      "main": [[{ "node": "Merge All Feeds", "type": "main", "index": 3 }]]
+    },
+    "Dev.to Africa": {
+      "main": [[{ "node": "Merge All Feeds", "type": "main", "index": 4 }]]
+    },
+    "Technext Nigeria": {
+      "main": [[{ "node": "Merge All Feeds", "type": "main", "index": 5 }]]
+    },
+    "Ventureburn": {
+      "main": [[{ "node": "Merge All Feeds", "type": "main", "index": 6 }]]
+    },
+    "Merge All Feeds": {
+      "main": [[{ "node": "Filter & Transform", "type": "main", "index": 0 }]]
+    },
+    "Filter & Transform": {
+      "main": [[{ "node": "Generate HMAC Signature", "type": "main", "index": 0 }]]
+    },
+    "Generate HMAC Signature": {
+      "main": [[{ "node": "Send to YOKK", "type": "main", "index": 0 }]]
+    },
+    "Send to YOKK": {
+      "main": [[{ "node": "Check Response", "type": "main", "index": 0 }]]
+    },
+    "Check Response": {
+      "main": [
+        [{ "node": "Log Success", "type": "main", "index": 0 }],
+        [{ "node": "Log Error", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["production", "rss", "yokk"]
+}

@@ -397,9 +397,7 @@ N8N_BOT_USER_ID=xxx
 | Vercel Env Vars | ⏳ Pending |
 | Bot User in Supabase | ⏳ Pending |
 
-**Generated Credentials:**
-- Webhook Secret: `0dc8e1fc62d14d5a81984071b80e65bada6f25294b69c258e46664a14a9f57e3`
-- Bot User UUID: `f47ac10b-58cc-4372-a567-0e02b2c3d479`
+
 
 **Next Session Should:**
 1. Verify N8N_WEBHOOK_SECRET is set in N8N Variables

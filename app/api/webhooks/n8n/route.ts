@@ -77,7 +77,7 @@ function verifyWebhookSignature(request: NextRequest, _body: string): boolean {
 
   // FAIL HARD if secret not configured - never allow unauthenticated requests
   if (!webhookSecret) {
-    throw new Error('N8N_WEBHOOK_SECRET is not configured. Webhook validation disabled.')
+    throw new Error('Webhook secret is not configured')
   }
 
   if (!signature) {
@@ -86,10 +86,12 @@ function verifyWebhookSignature(request: NextRequest, _body: string): boolean {
 
   // Constant-time comparison to prevent timing attacks
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(webhookSecret)
-    )
+    const sigBuf = Buffer.from(signature)
+    const secretBuf = Buffer.from(webhookSecret)
+    if (sigBuf.length !== secretBuf.length) {
+      return false
+    }
+    return crypto.timingSafeEqual(sigBuf, secretBuf)
   } catch {
     return false
   }

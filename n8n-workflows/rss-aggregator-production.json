@@ -130,7 +130,7 @@
             },
             {
               "name": "x-n8n-signature",
-              "value": "0dc8e1fc62d14d5a81984071b80e65bada6f25294b69c258e46664a14a9f57e3"
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
             },
             {
               "name": "x-workflow-type",

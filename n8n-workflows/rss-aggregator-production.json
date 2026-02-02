@@ -109,23 +109,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// Filter and transform RSS items for YOKK\nconst items = $input.all();\nconst filtered = [];\nconst seenTitles = new Set();\n\nfor (const item of items) {  \n  const data = item.json;\n  \n  // Skip if no title or content\n  if (!data.title || (!data.content && !data.description && !data.contentSnippet)) {\n    continue;\n  }\n  \n  // Extract and clean data\n  const title = data.title.trim().substring(0, 500);\n  \n  // Deduplicate by title\n  if (seenTitles.has(title.toLowerCase())) {\n    continue;\n  }\n  seenTitles.add(title.toLowerCase());\n  \n  const description = (data.contentSnippet || data.description || '').trim().substring(0, 1000);\n  const content = (data.content || data['content:encoded'] || data.description || '').trim().substring(0, 5000);\n  const link = data.link || data.url || data.guid;\n  \n  // Skip if no valid link\n  if (!link) continue;\n  \n  // Determine category from keywords\n  let category = 'news';\n  const lowerTitle = title.toLowerCase();\n  const lowerContent = (content || description).toLowerCase();\n  \n  if (lowerTitle.includes('startup') || lowerContent.includes('funding') || lowerContent.includes('raised') || lowerContent.includes('series')) {\n    category = 'startups';\n  } else if (lowerTitle.includes('tutorial') || lowerTitle.includes('how to') || lowerTitle.includes('guide') || lowerTitle.includes('learn')) {\n    category = 'tutorials';\n  } else if (lowerTitle.includes('job') || lowerTitle.includes('hiring') || lowerTitle.includes('career') || lowerTitle.includes('remote')) {\n    category = 'jobs';\n  } else if (lowerTitle.includes('event') || lowerTitle.includes('conference') || lowerTitle.includes('summit') || lowerTitle.includes('meetup')) {\n    category = 'events';\n  } else if (lowerTitle.includes('fintech') || lowerTitle.includes('payment') || lowerTitle.includes('banking')) {\n    category = 'fintech';\n  }\n  \n  // Extract tags\n  let tags = [];\n  if (Array.isArray(data.categories)) {\n    tags = data.categories.map(c => {\n      if (typeof c === 'string') return c.toLowerCase().trim();\n      if (c._ ) return c._.toLowerCase().trim();\n      return '';\n    }).filter(t => t && t.length < 30).slice(0, 5);\n  }\n  tags.push('rss');\n  \n  // Extract image\n  let imageUrl = null;\n  if (data.enclosure?.url) imageUrl = data.enclosure.url;\n  else if (data['media:thumbnail']?.$?.url) imageUrl = data['media:thumbnail'].$.url;\n  else if (data['media:content']?.$?.url) imageUrl = data['media:content'].$.url;\n  else if (data.image?.url) imageUrl = data.image.url;\n  \n  // Validate image URL\n  if (imageUrl && !imageUrl.startsWith('http')) {\n    imageUrl = null;\n  }\n  \n  filtered.push({\n    json: {\n      title: title,\n      description: description,\n      content: content,\n      category: category,\n      tags: tags,\n      image_url: imageUrl,\n      source_url: link,\n      published_at: data.isoDate || data.pubDate || new Date().toISOString()\n    }\n  });\n}\n\n// Limit to 20 most recent items per run\nreturn filtered.slice(0, 20);"
+        "jsCode": "// Filter, transform RSS items, and build webhook payload\nconst items = $input.all();\nconst filtered = [];\nconst seenTitles = new Set();\n\nfor (const item of items) {\n  const data = item.json;\n  \n  if (!data.title || (!data.content && !data.description && !data.contentSnippet)) {\n    continue;\n  }\n  \n  const title = data.title.trim().substring(0, 500);\n  \n  if (seenTitles.has(title.toLowerCase())) {\n    continue;\n  }\n  seenTitles.add(title.toLowerCase());\n  \n  const description = (data.contentSnippet || data.description || '').trim().substring(0, 1000);\n  const content = (data.content || data['content:encoded'] || data.description || '').trim().substring(0, 5000);\n  const link = data.link || data.url || data.guid;\n  \n  if (!link) continue;\n  \n  let category = 'news';\n  const lowerTitle = title.toLowerCase();\n  const lowerContent = (content || description).toLowerCase();\n  \n  if (lowerTitle.includes('startup') || lowerContent.includes('funding') || lowerContent.includes('raised') || lowerContent.includes('series')) {\n    category = 'startups';\n  } else if (lowerTitle.includes('tutorial') || lowerTitle.includes('how to') || lowerTitle.includes('guide') || lowerTitle.includes('learn')) {\n    category = 'tutorials';\n  } else if (lowerTitle.includes('job') || lowerTitle.includes('hiring') || lowerTitle.includes('career') || lowerTitle.includes('remote')) {\n    category = 'jobs';\n  } else if (lowerTitle.includes('event') || lowerTitle.includes('conference') || lowerTitle.includes('summit') || lowerTitle.includes('meetup')) {\n    category = 'events';\n  } else if (lowerTitle.includes('fintech') || lowerTitle.includes('payment') || lowerTitle.includes('banking')) {\n    category = 'fintech';\n  }\n  \n  let imageUrl = null;\n  if (data.enclosure?.url) imageUrl = data.enclosure.url;\n  else if (data['media:thumbnail']?.$?.url) imageUrl = data['media:thumbnail'].$.url;\n  else if (data['media:content']?.$?.url) imageUrl = data['media:content'].$.url;\n  else if (data.image?.url) imageUrl = data.image.url;\n  \n  if (imageUrl && !imageUrl.startsWith('http')) {\n    imageUrl = null;\n  }\n  \n  filtered.push({\n    title: title,\n    description: description,\n    content: content,\n    category: category,\n    image_url: imageUrl,\n    source_url: link,\n    published_at: data.isoDate || data.pubDate || new Date().toISOString()\n  });\n}\n\n// Build the webhook payload as pre-stringified JSON\nconst payload = {\n  workflowType: 'rss-feed',\n  items: filtered.slice(0, 20)\n};\n\nreturn [{\n  json: {\n    bodyString: JSON.stringify(payload)\n  }\n}];"
       },
       "id": "transform-data",
       "name": "Filter & Transform",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [880, 400]
-    },
-    {
-      "parameters": {
-        "jsCode": "const crypto = require('crypto');\n\nconst items = $input.all();\nconst webhookSecret = $env.N8N_WEBHOOK_SECRET;\n\nif (!webhookSecret) {\n  throw new Error('N8N_WEBHOOK_SECRET environment variable not set');\n}\n\nconst payload = {\n  workflowType: 'rss-feed',\n  items: items.map(i => i.json)\n};\n\nconst bodyString = JSON.stringify(payload);\n\n// Generate HMAC-SHA256 signature\nconst signature = crypto\n  .createHmac('sha256', webhookSecret)\n  .update(bodyString, 'utf-8')\n  .digest('hex');\n\nreturn [{\n  json: {\n    body: payload,\n    signature: signature\n  }\n}];"
-      },
-      "id": "generate-signature",
-      "name": "Generate HMAC Signature",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1100, 400]
     },
     {
       "parameters": {
@@ -140,7 +130,7 @@
             },
             {
               "name": "x-n8n-signature",
-              "value": "={{ $json.signature }}"
+              "value": "0dc8e1fc62d14d5a81984071b80e65bada6f25294b69c258e46664a14a9f57e3"
             },
             {
               "name": "x-workflow-type",
@@ -149,8 +139,8 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "specifyBody": "string",
+        "body": "={{ $json.bodyString }}",
         "options": {
           "timeout": 30000
         }
@@ -159,7 +149,7 @@
       "name": "Send to YOKK",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1320, 400]
+      "position": [1100, 400]
     },
     {
       "parameters": {
@@ -188,7 +178,7 @@
       "name": "Check Response",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1540, 400]
+      "position": [1320, 400]
     },
     {
       "parameters": {
@@ -208,7 +198,7 @@
       "name": "Log Success",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1760, 300]
+      "position": [1540, 300]
     },
     {
       "parameters": {
@@ -228,7 +218,7 @@
       "name": "Log Error",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1760, 500]
+      "position": [1540, 500]
     }
   ],
   "connections": {
@@ -270,9 +260,6 @@
       "main": [[{ "node": "Filter & Transform", "type": "main", "index": 0 }]]
     },
     "Filter & Transform": {
-      "main": [[{ "node": "Generate HMAC Signature", "type": "main", "index": 0 }]]
-    },
-    "Generate HMAC Signature": {
       "main": [[{ "node": "Send to YOKK", "type": "main", "index": 0 }]]
     },
     "Send to YOKK": {

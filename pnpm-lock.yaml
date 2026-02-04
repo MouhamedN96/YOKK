@@ -20,6 +20,9 @@ importers:
       '@ducanh2912/next-pwa':
         specifier: ^10.2.9
         version: 10.2.9(next@15.5.11(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(webpack@5.105.0)
+      '@huggingface/inference':
+        specifier: ^4.13.11
+        version: 4.13.11
       '@journeyapps/wa-sqlite':
         specifier: ^1.4.1
         version: 1.4.1
@@ -882,6 +885,17 @@ packages:
 
   '@hexagon/base64@1.1.28':
     resolution: {integrity: sha512-lhqDEAvWixy3bZ+UOYbPwUbBkwBq5C1LAJ/xPC8Oi+lL54oyakv/npbA0aU2hgCsx/1NUd4IBvV03+aUBWxerw==}
+
+  '@huggingface/inference@4.13.11':
+    resolution: {integrity: sha512-wygYsdlDIVNTBPyaGTuzqtotZOP6C9jsZ4AmXC06B5nGEs3IrwSQ9xp1Aa2cJylQYs3/y2BGN4gudsS+HV2v5w==}
+    engines: {node: '>=18'}
+
+  '@huggingface/jinja@0.5.5':
+    resolution: {integrity: sha512-xRlzazC+QZwr6z4ixEqYHo9fgwhTZ3xNSdljlKfUFGZSdlvt166DljRELFUfFytlYOYvo3vTisA/AFOuOAzFQQ==}
+    engines: {node: '>=18'}
+
+  '@huggingface/tasks@0.19.83':
+    resolution: {integrity: sha512-nBt3S6x+MWUTmfey1drQZRMuEopEbz2aEMUsoddfpCuzIYAMCsJDX7xeNuJnzvbVGis3gXXCRcLHVhFtHaaiyA==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -4817,6 +4831,15 @@ snapshots:
       levn: 0.4.1
 
   '@hexagon/base64@1.1.28': {}
+
+  '@huggingface/inference@4.13.11':
+    dependencies:
+      '@huggingface/jinja': 0.5.5
+      '@huggingface/tasks': 0.19.83
+
+  '@huggingface/jinja@0.5.5': {}
+
+  '@huggingface/tasks@0.19.83': {}
 
   '@humanfs/core@0.19.1': {}
 

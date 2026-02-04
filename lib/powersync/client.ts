@@ -33,8 +33,12 @@ export const setupPowerSync = async () => {
     ]);
   }
 
-  // Connect to Supabase for sync
-  await db.connect(supabaseConnector);
-
-  console.log('✅ PowerSync Ready');
+  // Connect to Supabase for sync (will gracefully handle missing config)
+  try {
+    await db.connect(supabaseConnector);
+    console.log('✅ PowerSync Ready (connected)');
+  } catch (error) {
+    console.log('⚠️ PowerSync running in offline-only mode:', error);
+    console.log('✅ PowerSync Ready (offline mode)');
+  }
 };

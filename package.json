@@ -4,13 +4,6 @@
   "type": "module",
   "description": "YOKK - Developer community platform web application",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "clean": "rm -rf .next"
-  },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.1",
     "@ai-sdk/openai": "^3.0.12",

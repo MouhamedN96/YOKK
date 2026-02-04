@@ -5,18 +5,29 @@ import {
 } from '@powersync/common';
 import { supabase } from '../supabase/client';
 
+// PowerSync URL - can be empty for offline-only mode
+const POWERSYNC_URL = process.env.NEXT_PUBLIC_POWERSYNC_URL || '';
+
 export const supabaseConnector: PowerSyncBackendConnector = {
   async fetchCredentials() {
+    // If no PowerSync URL configured, return null to disable sync
+    if (!POWERSYNC_URL) {
+      console.log('⚠️ PowerSync URL not configured - running in offline-only mode');
+      return null;
+    }
+
     // Get Supabase session for PowerSync authentication
     const { data: { session }, error } = await supabase.auth.getSession();
 
+    // If no session, return null to allow offline usage
     if (error || !session) {
-      throw new Error(`Failed to get Supabase session: ${error?.message}`);
+      console.log('ℹ️ No active session - PowerSync sync disabled, offline mode active');
+      return null;
     }
 
     // Return credentials for PowerSync connection
     return {
-      endpoint: process.env.NEXT_PUBLIC_POWERSYNC_URL!,
+      endpoint: POWERSYNC_URL,
       token: session.access_token
     };
   },

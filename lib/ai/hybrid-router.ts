@@ -1,6 +1,12 @@
 import { createGroq } from '@ai-sdk/groq';
 import { createOpenAI } from '@ai-sdk/openai';
 import { streamText, StreamTextResult } from 'ai';
+import { 
+  HF_MODELS, 
+  streamChatCompletionHF, 
+  chatCompletionHF,
+  checkModelAvailability 
+} from './huggingface-provider';
 
 // Initialize providers
 const groq = createGroq({
@@ -12,8 +18,25 @@ const openai = createOpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
 });
 
-// Define model tiers
-export type AiTier = 'tier1-local' | 'tier2-cloud' | 'tier3-premium';
+// Define model tiers - updated with Hugging Face models
+export type AiTier = 'tier1-local' | 'tier2-hf-qwen' | 'tier2-cloud' | 'tier3-hf-audio' | 'tier3-premium';
+
+// Model provider configuration
+export const MODEL_CONFIG = {
+  // Primary Bo AI on HuggingFace: Qwen 2.5 72B Instruct (free API)
+  // Alternative to Qwen3-Omni-30B which requires paid endpoints
+  PRIMARY_HF: HF_MODELS.PRIMARY,
+  
+  // Fallback for comments: Mistral 7B Instruct (free API)
+  // Alternative to LFM2-Audio-1.5B which requires paid endpoints
+  FALLBACK_HF: HF_MODELS.FALLBACK,
+  
+  // Cloud fallback: Qwen 3 70B on Groq
+  CLOUD_GROQ: 'qwen/qwen-3-70b-preview',
+  
+  // Premium tier: Claude 3.5 Sonnet via OpenRouter
+  PREMIUM_CLAUDE: 'anthropic/claude-3.5-sonnet:beta',
+} as const;
 
 // On-device AI simulation (would use actual model in production)
 class OnDeviceAI {
@@ -24,8 +47,25 @@ class OnDeviceAI {
   }
 }
 
-// Determine which tier to use based on query complexity
-export function determineTier(query: string): { tier: AiTier; reason: string } {
+// Determine which tier to use based on query complexity and context
+export function determineTier(
+  query: string, 
+  options: { 
+    preferHuggingFace?: boolean; 
+    isAudioContext?: boolean;
+    isCommentContext?: boolean;
+  } = {}
+): { tier: AiTier; reason: string } {
+  const { preferHuggingFace = true, isAudioContext = false, isCommentContext = false } = options;
+
+  // Audio/comment context - use Mistral 7B for fast responses
+  if (isAudioContext) {
+    return { 
+      tier: 'tier3-hf-audio', 
+      reason: 'Audio context - using Mistral 7B for low-latency response' 
+    };
+  }
+
   // Simple queries that can be handled by on-device Qwen 0.6B
   const simpleQueryPatterns = [
     /hello|hi|hey|greetings/i,
@@ -43,43 +83,75 @@ export function determineTier(query: string): { tier: AiTier; reason: string } {
     /multilingual|french|wolof|pidgin|language/i
   ];
 
-  // Complex reasoning queries that need cloud models
-  const complexQueryPatterns = [
-    /architecture|design|pattern/i,
-    /strategy|approach|methodology/i,
-    /business|market|monetization/i,
-    /advanced|complex|sophisticated/i,
-    /ethics|philosophy|theory/i,
-    /long form|essay|comprehensive/i,
-    /analyze|evaluate|compare/i,
-    /deep|thorough|detailed/i
+  // Complex reasoning queries that benefit from thinking models
+  const thinkingQueryPatterns = [
+    /think|reason|step by step|chain of thought/i,
+    /analyze|evaluate|compare|assess/i,
+    /multimodal|image|video|audio/i,
+    /planning|roadmap|strategy/i,
+    /deep|thorough|detailed|comprehensive/i,
   ];
 
-  // Contextual patterns for specific Bo AI functions
-  const contextualPatterns = {
-    summary: [/summarize|summary|brief|concise|overview/i],
-    translation: [/translate|translation|language|french|spanish|portuguese|swahili|hausa|yoruba|igbo/i],
-    explanation: [/explain|explanation|clarify|understand|meaning|definition/i],
-    code: [/code|syntax|debug|function|implement|javascript|python|react|next/i],
-    advice: [/advice|recommend|suggest|best practice|how to/i]
-  };
+  // Premium tier patterns (Claude for very complex tasks)
+  const premiumQueryPatterns = [
+    /architecture|system design|scalability/i,
+    /business|market|monetization|investment/i,
+    /ethics|philosophy|theory|abstract/i,
+    /long form|essay|report|documentation/i,
+  ];
 
-  // Check for complex patterns first
-  for (const pattern of complexQueryPatterns) {
+  // Comment-specific queries that benefit from quick responses
+  const commentQueryPatterns = [
+    /summarize|summary|tldr|brief/i,
+    /translate|translation/i,
+    /explain|eli5|simple terms/i,
+    /sentiment|tone|mood/i,
+  ];
+
+  // Check for premium patterns first
+  for (const pattern of premiumQueryPatterns) {
     if (pattern.test(query.toLowerCase())) {
-      return { tier: 'tier3-premium', reason: 'Complex reasoning required' };
+      return { tier: 'tier3-premium', reason: 'Complex reasoning - using Claude 3.5 Sonnet' };
     }
   }
 
-  // Then check for simple patterns that can be handled locally
+  // Check for thinking/reasoning patterns - use Qwen 2.5 72B on HuggingFace
+  if (preferHuggingFace && process.env.Huggingface_Yokk) {
+    for (const pattern of thinkingQueryPatterns) {
+      if (pattern.test(query.toLowerCase())) {
+        return { 
+          tier: 'tier2-hf-qwen', 
+          reason: 'Reasoning query - using Qwen 2.5 72B on HuggingFace' 
+        };
+      }
+    }
+  }
+
+  // Comment context - use HuggingFace Mistral for quick responses
+  if (isCommentContext && preferHuggingFace && process.env.Huggingface_Yokk) {
+    for (const pattern of commentQueryPatterns) {
+      if (pattern.test(query.toLowerCase())) {
+        return { 
+          tier: 'tier3-hf-audio', 
+          reason: 'Comment task - using Mistral 7B on HuggingFace' 
+        };
+      }
+    }
+  }
+
+  // Simple queries - on-device
   for (const pattern of simpleQueryPatterns) {
     if (pattern.test(query.toLowerCase())) {
-      return { tier: 'tier1-local', reason: 'Simple query suitable for on-device Qwen 0.6B' };
+      return { tier: 'tier1-local', reason: 'Simple query - on-device Qwen 0.6B' };
     }
   }
 
-  // Default to Tier 2 (Qwen 3 32B on Groq) for medium complexity queries
-  return { tier: 'tier2-cloud', reason: 'Medium complexity - using Qwen 3 32B on Groq' };
+  // Default: Use HuggingFace Qwen if preferred and available, otherwise Groq
+  if (preferHuggingFace && process.env.Huggingface_Yokk) {
+    return { tier: 'tier2-hf-qwen', reason: 'General query - using Qwen 2.5 72B on HuggingFace' };
+  }
+
+  return { tier: 'tier2-cloud', reason: 'General query - using Qwen 3 70B on Groq' };
 }
 
 // Enhanced routing with context awareness
@@ -142,15 +214,45 @@ CONTEXT SPECIFIC RESPONSES:
         headers: { 'Content-Type': 'text/plain' }
       })
     } as any;
+  } else if (tier === 'tier2-hf-qwen') {
+    // Use Qwen 2.5 72B on HuggingFace (primary HF model)
+    console.log('Routing to HuggingFace Qwen 2.5 72B');
+    const stream = streamChatCompletionHF(
+      [{ role: 'system', content: effectiveSystemPrompt }, ...messages],
+      { model: MODEL_CONFIG.PRIMARY_HF, temperature: 0.7 }
+    );
+    return {
+      textStream: stream as any,
+      toTextStreamResponse: () => new Response(stream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      }),
+      toDataStreamResponse: () => new Response(stream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      })
+    } as any;
+  } else if (tier === 'tier3-hf-audio') {
+    // Use Mistral 7B on HuggingFace (fast fallback for comments)
+    console.log('Routing to HuggingFace Mistral 7B');
+    const stream = streamChatCompletionHF(
+      [{ role: 'system', content: effectiveSystemPrompt }, ...messages],
+      { model: MODEL_CONFIG.FALLBACK_HF, temperature: 0.6 }
+    );
+    return {
+      textStream: stream as any,
+      toTextStreamResponse: () => new Response(stream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      }),
+      toDataStreamResponse: () => new Response(stream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      })
+    } as any;
   } else if (tier === 'tier2-cloud') {
-    // Use Qwen 3 32B on Groq (as per your specification)
+    // Use Qwen 3 70B on Groq (cloud fallback)
     return streamText({
-      model: groq('qwen/qwen-3-70b-preview'), // Using Qwen model on Groq as specified
+      model: groq('qwen/qwen-3-70b-preview'),
       system: effectiveSystemPrompt,
       messages,
-      // Cost optimization: Lower temperature for more predictable responses
       temperature: 0.7,
-      // Add context-specific instructions if provided
       ...(context && {
         topP: context === 'creative' ? 0.9 : 0.7,
       })

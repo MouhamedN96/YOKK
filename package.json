@@ -16,6 +16,7 @@
     "@ai-sdk/openai": "^3.0.12",
     "@ai-sdk/react": "^3.0.3",
     "@ducanh2912/next-pwa": "^10.2.9",
+    "@huggingface/inference": "^4.13.11",
     "@journeyapps/wa-sqlite": "^1.4.1",
     "@powersync/common": "^1.44.0",
     "@powersync/react": "^1.8.2",

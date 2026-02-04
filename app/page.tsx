@@ -2,44 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-// import { useChat } from 'ai/react' // TODO: Fix package export
+import { useChat } from '@ai-sdk/react'
 import { useQuery } from '@powersync/react'
-
-// Mock useChat for build stability
-const useChat = (config: any) => {
-  const [messages, setMessages] = useState<any[]>([])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-
-  const append = (msg: any) => {
-    setMessages(prev => [...prev, msg])
-    setIsLoading(true)
-    setTimeout(() => {
-      setMessages(prev => [...prev, { 
-        id: Date.now().toString(), 
-        role: 'assistant', 
-        content: "I'm Bo AI. I'm currently offline-optimized, but I'll be fully connected to Groq soon!" 
-      }])
-      setIsLoading(false)
-    }, 1000)
-  }
-
-  const handleSubmit = (e: any) => {
-    e.preventDefault()
-    if (!input.trim()) return
-    append({ role: 'user', content: input })
-    setInput('')
-  }
-
-  return {
-    messages,
-    input,
-    handleInputChange: (e: any) => setInput(e.target.value),
-    handleSubmit,
-    isLoading,
-    append
-  }
-}
 import { ModernHeroCard, type ModernHeroCardData } from '@/components/design/cards/ModernHeroCard'
 import { MobileOptimizedCard, type MobileOptimizedCardData } from '@/components/design/cards/MobileOptimizedCard'
 import { Sidebar } from '@/components/design/sidebar/Sidebar'
@@ -49,7 +13,36 @@ import { StreakDisplay } from '@/components/design/gamification/StreakDisplay'
 import { LevelBadge } from '@/components/design/gamification/LevelBadge'
 import { Menu, Search, Bell, User, Sparkles, Rocket, MessageSquare, Flame, ChevronUp, Home as HomeIcon, Video, Briefcase, Plus, Send, Loader2 } from 'lucide-react'
 import { posts } from '@/lib/supabase/posts'
-import { useAuth } from '@/hooks/useAuth'
+// Custom hook for home page that works without AuthProvider
+// This page is outside the (main) route group, so AuthProvider is not available
+const useHomeAuth = () => {
+  const [authState, setAuthState] = React.useState<{
+    user: any | null
+    profile: any | null
+    loading: boolean
+  }>({
+    user: null,
+    profile: null,
+    loading: true
+  })
+
+  React.useEffect(() => {
+    // Check localStorage cache for profile
+    const cached = localStorage.getItem('yokk-profile-cache')
+    if (cached) {
+      try {
+        const profile = JSON.parse(cached)
+        setAuthState({ user: { id: profile.id }, profile, loading: false })
+      } catch {
+        setAuthState(prev => ({ ...prev, loading: false }))
+      }
+    } else {
+      setAuthState(prev => ({ ...prev, loading: false }))
+    }
+  }, [])
+
+  return authState
+}
 import type { PostWithProfile } from '@/lib/supabase/types'
 
 // Type definitions for feed items
@@ -80,8 +73,8 @@ type PostItem = {
 type FeedItem = LaunchItem | PostItem
 
 export default function Home() {
-  // Auth
-  const { user: authUser, profile, loading: authLoading } = useAuth()
+  // Auth - using local hook since this page is outside AuthProvider
+  const { user: authUser, profile, loading: authLoading } = useHomeAuth()
 
   // AI Chat
   const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({

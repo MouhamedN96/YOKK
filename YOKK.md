@@ -50,7 +50,7 @@ AI-native community platform combining X + Bilibili + ProductHunt + integrated A
 |---------|--------|-------|
 | Auth (Phone OTP) | Working | Supabase Auth via SMS |
 | Auth (Passkeys) | Scaffolded | API routes exist, needs HTTPS for full WebAuthn |
-| Onboarding | Working | 3-step wizard (username → role → interests) |
+| Onboarding | Working | 3-step wizard (username -> role -> interests) |
 | Home Feed | Working | Reads from `posts` table with demo fallback |
 | Compose | Working | Client-side compression, draft saving |
 | Explore | Working | Categories, demo data |
@@ -59,23 +59,28 @@ AI-native community platform combining X + Bilibili + ProductHunt + integrated A
 | Launch | Demo | ProductHunt-style, demo data |
 | Middleware | Working | Route protection, session management |
 | PostHog | Working | Analytics, page views |
-| N8N RSS | Ready | Workflow created, needs deployment |
+| N8N RSS | Ready | Workflow created, env vars set |
+| Bo AI (Groq) | Working | Qwen 3 70B via Groq |
+| Bo AI (HuggingFace) | Scaffolded | Code exists, not wired |
 
 ### What's Missing/Broken
 | Issue | Severity | Notes |
 |-------|----------|-------|
-| Supabase Storage buckets | HIGH | `posts` and `launches` buckets not created |
-| PowerSync | HIGH | Schema exists, not connected |
-| Bo AI | MEDIUM | Router exists, UI not wired to endpoint |
+| HF env var mismatch | HIGH | Code: `HUGGINGFACE_API_KEY`, Env: `Huggingface_Yokk` |
+| HF not routed | HIGH | Tiers defined but fall through to Groq |
+| Supabase Storage buckets | MEDIUM | `posts` and `launches` buckets not created |
+| PowerSync | MEDIUM | Schema exists, graceful fallback works |
 | Real profiles | MEDIUM | Shows demo data |
+| OpenRouter API key | LOW | Claude premium tier disabled |
 | Gamification logic | LOW | XP/levels not calculating |
 | Voice comments | LOW | Components exist, not integrated |
 
 ### Technical Debt
+- [ ] Fix HF env var name in `huggingface-provider.ts`
+- [ ] Update HF model IDs to free API alternatives
+- [ ] Wire HF to router (actually call HF functions)
 - [ ] Storage buckets need creation in Supabase
-- [ ] PowerSync connector needs initialization
 - [ ] Image compression destination not configured
-- [ ] Nano Banana API key missing (image generation)
 - [ ] No E2E tests
 
 ---
@@ -248,16 +253,15 @@ yokk-app/
 | 1.3 | Auth Flow | COMPLETE | OTP + Passkey scaffolded |
 | 1.4 | Core Layout | COMPLETE | Header, Sidebar, BottomNav |
 | 1.5 | Entry & Onboarding | COMPLETE | Login + 3-step wizard |
-| 2.1 | Post Components | IN PROGRESS | PostCard types needed |
-| 2.2 | Feed Features | PENDING | Infinite scroll, filters |
+| 2.1 | Social Feed | COMPLETE | Home feed with real data |
+| 2.2 | AI Integration | IN PROGRESS | Groq working, HF scaffolded |
 | 2.3 | Interactions | PENDING | Upvotes, bookmarks |
 | 2.4 | Compose Enhancement | PENDING | Image upload |
 | 3 | Profiles & Gamification | PENDING | XP, achievements |
 | 4 | Product Launches | PENDING | ProductHunt-style |
-| 5 | Bo AI Assistant | PENDING | Chat UI wiring |
-| 6 | Voice Comments | PENDING | Opus encoding |
-| 7 | PowerSync Offline | PENDING | True offline sync |
-| 8 | Production Polish | PENDING | Testing, security audit |
+| 5 | Voice Comments | PENDING | Opus encoding |
+| 6 | PowerSync Offline | PENDING | True offline sync |
+| 7 | Production Polish | PENDING | Testing, security audit |
 
 ---
 
@@ -342,6 +346,46 @@ N8N_BOT_USER_ID=xxx
 ## 12. Session Log
 
 > Every agent session MUST add an entry before ending.
+
+### Session 005 - 2026-02-04
+**Agent:** The Architect (v0)
+**Phase:** 2.2 AI Integration
+
+**Completed:**
+- Fixed deployment blockers (PowerSync, auth hook, AI SDK import)
+- Created HuggingFace provider scaffolding (`lib/ai/huggingface-provider.ts`)
+- Modified hybrid router with HF tier definitions
+- Created implementation plan (`docs/HUGGINGFACE_INTEGRATION_PLAN.md`)
+- Synced all documentation with actual codebase state
+
+**Current AI State:**
+- Groq: WORKING (primary cloud tier)
+- HuggingFace: SCAFFOLDED (code exists, env var mismatch, not wired)
+- OpenRouter: NO API KEY (premium tier disabled)
+
+**Issues Identified:**
+1. `huggingface-provider.ts` uses `HUGGINGFACE_API_KEY` but env is `Huggingface_Yokk`
+2. HF models in config not available on free Inference API
+3. `hybrid-router.ts` defines HF tiers but never routes to them
+
+**Decisions Made:**
+- Option B approved: Use free HF Inference API with alternative models
+- Models: `Qwen2.5-72B-Instruct` (primary), `Mistral-7B-Instruct-v0.2` (fallback)
+- Development approach: Issue-Driven
+
+**Next Session Should:**
+1. Fix HF env var (change to `Huggingface_Yokk`)
+2. Update model IDs to free API alternatives
+3. Wire HF to router (make HF tiers actually call HF)
+4. Test end-to-end
+
+**Files Changed:**
+- Modified: `lib/powersync/connector.ts`, `lib/powersync/client.ts`, `app/page.tsx`
+- Modified: `lib/ai/hybrid-router.ts`
+- Created: `lib/ai/huggingface-provider.ts`, `docs/HUGGINGFACE_INTEGRATION_PLAN.md`
+- Modified: `ARCHITECT.md`, `YOKK-STATE.md`, `YOKK.md`
+
+---
 
 ### Session 003 - 2026-01-25
 **Agent:** Claude Opus 4.5

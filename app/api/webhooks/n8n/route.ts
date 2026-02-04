@@ -70,32 +70,28 @@ function checkRateLimit(ip: string): boolean {
   return true
 }
 
-// HMAC-SHA256 webhook signature verification
-function verifyWebhookSignature(request: NextRequest, body: string): boolean {
+// Webhook secret verification (timing-safe comparison)
+function verifyWebhookSignature(request: NextRequest, _body: string): boolean {
   const signature = request.headers.get('x-n8n-signature')
   const webhookSecret = process.env.N8N_WEBHOOK_SECRET
 
   // FAIL HARD if secret not configured - never allow unauthenticated requests
   if (!webhookSecret) {
-    throw new Error('N8N_WEBHOOK_SECRET is not configured. Webhook validation disabled.')
+    throw new Error('Webhook secret is not configured')
   }
 
   if (!signature) {
     return false
   }
 
-  // HMAC-SHA256 of body with secret key
-  const expectedSignature = crypto
-    .createHmac('sha256', webhookSecret)
-    .update(body, 'utf-8')
-    .digest('hex')
-
   // Constant-time comparison to prevent timing attacks
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    )
+    const sigBuf = Buffer.from(signature)
+    const secretBuf = Buffer.from(webhookSecret)
+    if (sigBuf.length !== secretBuf.length) {
+      return false
+    }
+    return crypto.timingSafeEqual(sigBuf, secretBuf)
   } catch {
     return false
   }

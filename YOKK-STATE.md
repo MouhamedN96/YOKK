@@ -23,22 +23,32 @@
 - [ ] **AI (Bo):** HuggingFace integration PENDING (see docs/HUGGINGFACE_INTEGRATION_PLAN.md).
 
 ## 🔌 INTEGRATIONS STATUS
-| Integration | Status | Env Var |
-|-------------|--------|---------|
-| Supabase | CONNECTED | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_ANON_KEY` |
-| Groq | CONNECTED | `GROQ_API_KEY` |
-| HuggingFace | PARTIAL | `Huggingface_Yokk` (code uses different name) |
-| Vercel Blob | CONNECTED | `BLOB_READ_WRITE_TOKEN` |
-| Upstash Redis | CONNECTED | `KV_URL`, `REDIS_URL` |
-| OpenRouter | NOT CONFIGURED | Missing `OPENROUTER_API_KEY` |
-| PowerSync | OPTIONAL | Missing `NEXT_PUBLIC_POWERSYNC_URL` (offline mode works) |
+| Integration | Status | Env Var | Code Status |
+|-------------|--------|---------|-------------|
+| Supabase | CONNECTED | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Working |
+| Groq | CONNECTED | `GROQ_API_KEY` | Working (primary AI) |
+| HuggingFace | ENV READY | `Huggingface_Yokk` | Code uses wrong var name |
+| Vercel Blob | CONNECTED | `BLOB_READ_WRITE_TOKEN` | Working |
+| Upstash Redis | CONNECTED | `KV_URL`, `REDIS_URL` | Working |
+| Vercel AI Gateway | CONNECTED | Auto-configured | Available |
+| OpenRouter | NO API KEY | Missing `OPENROUTER_API_KEY` | Premium tier disabled |
+| PowerSync | NO CONFIG | Missing `NEXT_PUBLIC_POWERSYNC_URL` | Graceful fallback |
+| N8N | CONFIGURED | `N8N_WEBHOOK_SECRET`, `N8N_BOT_USER_ID` | Ready |
 
 ## ⚠️ TECHNICAL DEBT / ACTION REQUIRED
-1. **STORAGE:** Must create `posts` and `launches` public buckets in Supabase.
-2. **SYNC:** Need to migrate from `localStorage` to `PowerSync` SQLite for true offline.
-3. **PASSKEYS:** API Routes exist but require a live HTTPS domain for full WebAuthn verification.
-4. **AI/HF:** HuggingFace provider uses wrong env var name (`HUGGINGFACE_API_KEY` vs `Huggingface_Yokk`).
-5. **AI/HF:** Router defines HF tiers but doesn't route to them yet.
+
+### HIGH Priority
+1. **AI/HF Env Var:** `lib/ai/huggingface-provider.ts` line 4 uses `HUGGINGFACE_API_KEY` - should be `Huggingface_Yokk`
+2. **AI/HF Models:** Config references models not on free API (`Qwen3-Omni-30B`, `LFM2-Audio-1.5B`)
+3. **AI/HF Routing:** `hybrid-router.ts` imports HF but never calls it - `tier2-hf-qwen` falls through to Groq
+
+### MEDIUM Priority
+4. **STORAGE:** Must create `posts` and `launches` public buckets in Supabase.
+5. **PASSKEYS:** API Routes exist but require HTTPS domain for WebAuthn.
+
+### LOW Priority
+6. **SYNC:** Migrate from `localStorage` to `PowerSync` SQLite for true offline.
+7. **OpenRouter:** Add API key to enable Claude premium tier.
 
 ## 📋 PENDING PLANS
 - **HuggingFace Integration:** See `docs/HUGGINGFACE_INTEGRATION_PLAN.md` (APPROVED - Option B)

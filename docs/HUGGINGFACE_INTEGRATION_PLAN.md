@@ -349,18 +349,19 @@ If HuggingFace integration causes issues:
 - [x] **Model alternatives** - `Qwen2.5-72B-Instruct` and `Mistral-7B-Instruct-v0.2`
 
 ### Pending Confirmation
-- [ ] Environment variable name: Keep `Huggingface_Yokk` or rename to `HUGGINGFACE_API_KEY`?
 - [ ] Ready to proceed with Phase 1 implementation?
+
+### Implementation Decision
+**Use existing `Huggingface_Yokk` env var** - Update code to match, not rename in Vercel.
 
 ---
 
 ## Next Steps
 
-1. **Confirm env var approach** - Use existing `Huggingface_Yokk` or request rename
-2. **Implement Phase 1** - Fix all 3 critical issues
-3. **Create test endpoint** - Verify integration works
-4. **Deploy to preview** - Test in live environment
-5. **Create PR** - Merge to main branch
+1. **Fix env var** - Change `HUGGINGFACE_API_KEY` to `Huggingface_Yokk` in code
+2. **Update models** - Use free API alternatives
+3. **Wire router** - Make HF tiers actually call HuggingFace
+4. **Test** - Verify end-to-end
 
 ---
 
@@ -370,3 +371,4 @@ If HuggingFace integration causes issues:
 |---------|------|---------|
 | 1.0 | 2026-02-04 | Initial plan created |
 | 1.1 | 2026-02-04 | Added codebase analysis, deployment status, issue-driven workflow |
+| 1.2 | 2026-02-04 | Synced with actual codebase state, confirmed env var approach |

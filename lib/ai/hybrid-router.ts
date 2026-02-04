@@ -23,13 +23,13 @@ export type AiTier = 'tier1-local' | 'tier2-hf-qwen' | 'tier2-cloud' | 'tier3-hf
 
 // Model provider configuration
 export const MODEL_CONFIG = {
-  // Primary Bo AI: Qwen3-Omni-30B-A3B-Thinking (Hugging Face)
-  // MoE model with 30B params, 3B active - excellent reasoning with thinking capabilities
-  PRIMARY_HF: HF_MODELS.QWEN_OMNI_THINKING,
+  // Primary Bo AI on HuggingFace: Qwen 2.5 72B Instruct (free API)
+  // Alternative to Qwen3-Omni-30B which requires paid endpoints
+  PRIMARY_HF: HF_MODELS.PRIMARY,
   
-  // Fallback for audio/comments: LFM2-Audio-1.5B (Hugging Face)
-  // Lightweight 1.5B model designed for low-latency real-time conversation
-  AUDIO_FALLBACK_HF: HF_MODELS.LFM2_AUDIO,
+  // Fallback for comments: Mistral 7B Instruct (free API)
+  // Alternative to LFM2-Audio-1.5B which requires paid endpoints
+  FALLBACK_HF: HF_MODELS.FALLBACK,
   
   // Cloud fallback: Qwen 3 70B on Groq
   CLOUD_GROQ: 'qwen/qwen-3-70b-preview',
@@ -58,11 +58,11 @@ export function determineTier(
 ): { tier: AiTier; reason: string } {
   const { preferHuggingFace = true, isAudioContext = false, isCommentContext = false } = options;
 
-  // Audio context - use LFM2-Audio for low-latency responses
+  // Audio/comment context - use Mistral 7B for fast responses
   if (isAudioContext) {
     return { 
       tier: 'tier3-hf-audio', 
-      reason: 'Audio context - using LFM2-Audio-1.5B for low-latency response' 
+      reason: 'Audio context - using Mistral 7B for low-latency response' 
     };
   }
 
@@ -115,25 +115,25 @@ export function determineTier(
     }
   }
 
-  // Check for thinking/multimodal patterns - use Qwen3-Omni-Thinking on HuggingFace
-  if (preferHuggingFace) {
+  // Check for thinking/reasoning patterns - use Qwen 2.5 72B on HuggingFace
+  if (preferHuggingFace && process.env.Huggingface_Yokk) {
     for (const pattern of thinkingQueryPatterns) {
       if (pattern.test(query.toLowerCase())) {
         return { 
           tier: 'tier2-hf-qwen', 
-          reason: 'Reasoning query - using Qwen3-Omni-30B-A3B-Thinking on HuggingFace' 
+          reason: 'Reasoning query - using Qwen 2.5 72B on HuggingFace' 
         };
       }
     }
   }
 
-  // Comment context - use HuggingFace for quick responses
-  if (isCommentContext && preferHuggingFace) {
+  // Comment context - use HuggingFace Mistral for quick responses
+  if (isCommentContext && preferHuggingFace && process.env.Huggingface_Yokk) {
     for (const pattern of commentQueryPatterns) {
       if (pattern.test(query.toLowerCase())) {
         return { 
-          tier: 'tier2-hf-qwen', 
-          reason: 'Comment task - using Qwen3-Omni on HuggingFace' 
+          tier: 'tier3-hf-audio', 
+          reason: 'Comment task - using Mistral 7B on HuggingFace' 
         };
       }
     }
@@ -146,9 +146,9 @@ export function determineTier(
     }
   }
 
-  // Default: Use HuggingFace Qwen if preferred, otherwise Groq
-  if (preferHuggingFace && process.env.HUGGINGFACE_API_KEY) {
-    return { tier: 'tier2-hf-qwen', reason: 'General query - using Qwen3-Omni on HuggingFace' };
+  // Default: Use HuggingFace Qwen if preferred and available, otherwise Groq
+  if (preferHuggingFace && process.env.Huggingface_Yokk) {
+    return { tier: 'tier2-hf-qwen', reason: 'General query - using Qwen 2.5 72B on HuggingFace' };
   }
 
   return { tier: 'tier2-cloud', reason: 'General query - using Qwen 3 70B on Groq' };
@@ -214,15 +214,45 @@ CONTEXT SPECIFIC RESPONSES:
         headers: { 'Content-Type': 'text/plain' }
       })
     } as any;
+  } else if (tier === 'tier2-hf-qwen') {
+    // Use Qwen 2.5 72B on HuggingFace (primary HF model)
+    console.log('Routing to HuggingFace Qwen 2.5 72B');
+    const stream = streamChatCompletionHF(
+      [{ role: 'system', content: effectiveSystemPrompt }, ...messages],
+      { model: MODEL_CONFIG.PRIMARY_HF, temperature: 0.7 }
+    );
+    return {
+      textStream: stream as any,
+      toTextStreamResponse: () => new Response(stream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      }),
+      toDataStreamResponse: () => new Response(stream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      })
+    } as any;
+  } else if (tier === 'tier3-hf-audio') {
+    // Use Mistral 7B on HuggingFace (fast fallback for comments)
+    console.log('Routing to HuggingFace Mistral 7B');
+    const stream = streamChatCompletionHF(
+      [{ role: 'system', content: effectiveSystemPrompt }, ...messages],
+      { model: MODEL_CONFIG.FALLBACK_HF, temperature: 0.6 }
+    );
+    return {
+      textStream: stream as any,
+      toTextStreamResponse: () => new Response(stream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      }),
+      toDataStreamResponse: () => new Response(stream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      })
+    } as any;
   } else if (tier === 'tier2-cloud') {
-    // Use Qwen 3 32B on Groq (as per your specification)
+    // Use Qwen 3 70B on Groq (cloud fallback)
     return streamText({
-      model: groq('qwen/qwen-3-70b-preview'), // Using Qwen model on Groq as specified
+      model: groq('qwen/qwen-3-70b-preview'),
       system: effectiveSystemPrompt,
       messages,
-      // Cost optimization: Lower temperature for more predictable responses
       temperature: 0.7,
-      // Add context-specific instructions if provided
       ...(context && {
         topP: context === 'creative' ? 0.9 : 0.7,
       })

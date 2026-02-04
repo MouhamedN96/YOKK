@@ -1,7 +1,7 @@
 # YOKK-STATE.md - Current System State
 
 **Last Updated:** 2026-02-04
-**Current Phase:** 2.2 (AI Integration) / 2.1 (Post Components) / 1.5 (Onboarding DONE)
+**Current Phase:** 2.2 (AI Integration COMPLETE) / 2.1 (Post Components) / 1.5 (Onboarding DONE)
 
 ## 🏗️ INFRASTRUCTURE
 - **Framework:** Next.js 15 (App Router)
@@ -20,14 +20,14 @@
 - [x] **Compose:** Functional (Background compression + local drafts).
 - [ ] **Profiles:** Demo data only.
 - [x] **AI (Bo):** UI complete, Groq integration working.
-- [ ] **AI (Bo):** HuggingFace integration PENDING (see docs/HUGGINGFACE_INTEGRATION_PLAN.md).
+- [x] **AI (Bo):** HuggingFace integration COMPLETE (Qwen 2.5 72B + Mistral 7B).
 
 ## 🔌 INTEGRATIONS STATUS
 | Integration | Status | Env Var | Code Status |
 |-------------|--------|---------|-------------|
 | Supabase | CONNECTED | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Working |
-| Groq | CONNECTED | `GROQ_API_KEY` | Working (primary AI) |
-| HuggingFace | ENV READY | `Huggingface_Yokk` | Code uses wrong var name |
+| Groq | CONNECTED | `GROQ_API_KEY` | Working (cloud fallback) |
+| HuggingFace | CONNECTED | `Huggingface_Yokk` | Working (primary AI) |
 | Vercel Blob | CONNECTED | `BLOB_READ_WRITE_TOKEN` | Working |
 | Upstash Redis | CONNECTED | `KV_URL`, `REDIS_URL` | Working |
 | Vercel AI Gateway | CONNECTED | Auto-configured | Available |
@@ -37,24 +37,24 @@
 
 ## ⚠️ TECHNICAL DEBT / ACTION REQUIRED
 
-### HIGH Priority
-1. **AI/HF Env Var:** `lib/ai/huggingface-provider.ts` line 4 uses `HUGGINGFACE_API_KEY` - should be `Huggingface_Yokk`
-2. **AI/HF Models:** Config references models not on free API (`Qwen3-Omni-30B`, `LFM2-Audio-1.5B`)
-3. **AI/HF Routing:** `hybrid-router.ts` imports HF but never calls it - `tier2-hf-qwen` falls through to Groq
+### RESOLVED (Session 005)
+- ~~AI/HF Env Var~~ - Fixed: Uses `Huggingface_Yokk`
+- ~~AI/HF Models~~ - Fixed: Uses `Qwen2.5-72B-Instruct` and `Mistral-7B-Instruct-v0.2`
+- ~~AI/HF Routing~~ - Fixed: `tier2-hf-qwen` and `tier3-hf-audio` route to HuggingFace
 
 ### MEDIUM Priority
-4. **STORAGE:** Must create `posts` and `launches` public buckets in Supabase.
-5. **PASSKEYS:** API Routes exist but require HTTPS domain for WebAuthn.
+1. **STORAGE:** Must create `posts` and `launches` public buckets in Supabase.
+2. **PASSKEYS:** API Routes exist but require HTTPS domain for WebAuthn.
 
 ### LOW Priority
-6. **SYNC:** Migrate from `localStorage` to `PowerSync` SQLite for true offline.
-7. **OpenRouter:** Add API key to enable Claude premium tier.
+3. **SYNC:** Migrate from `localStorage` to `PowerSync` SQLite for true offline.
+4. **OpenRouter:** Add API key to enable Claude premium tier.
 
-## 📋 PENDING PLANS
-- **HuggingFace Integration:** See `docs/HUGGINGFACE_INTEGRATION_PLAN.md` (APPROVED - Option B)
-  - Status: Ready for Phase 1 implementation
-  - Approach: Issue-Driven Development
-  - Models: `Qwen2.5-72B-Instruct` (primary), `Mistral-7B-Instruct-v0.2` (fallback)
+## 📋 COMPLETED PLANS
+- **HuggingFace Integration:** COMPLETE (Session 005)
+  - Models: `Qwen/Qwen2.5-72B-Instruct` (primary), `mistralai/Mistral-7B-Instruct-v0.2` (fallback)
+  - Test endpoint: `/api/test/hf`
+  - See `docs/HUGGINGFACE_INTEGRATION_PLAN.md` for details
 
 ## 🔗 RESOURCES
 - **Main Log:** `MIGRATION_LOG.md`

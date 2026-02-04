@@ -1,22 +1,27 @@
 import { HfInference } from '@huggingface/inference';
 
 // Initialize Hugging Face client
-const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+// Env var name matches Vercel integration: Huggingface_Yokk
+const hf = new HfInference(process.env.Huggingface_Yokk);
 
 // Model configurations for Bo AI
+// Using models available on FREE HuggingFace Inference API
 export const HF_MODELS = {
-  // Main Bo AI model - Qwen3-Omni with thinking/reasoning capabilities
-  // This is a 30B MoE model with 3B active parameters - excellent for multimodal tasks
-  QWEN_OMNI_THINKING: 'Qwen/Qwen3-Omni-30B-A3B-Thinking',
+  // PRIMARY: Qwen 2.5 72B Instruct - Best reasoning model on free API
+  // Chosen as alternative to Qwen3-Omni-30B (requires paid endpoints)
+  PRIMARY: 'Qwen/Qwen2.5-72B-Instruct',
   
-  // Fallback model for audio/comments - LFM2 Audio 1.5B
-  // Lightweight, designed for low-latency real-time conversation
-  LFM2_AUDIO: 'LiquidAI/LFM2-Audio-1.5B',
+  // FALLBACK: Mistral 7B Instruct - Fast, lightweight for comments
+  // Chosen as alternative to LFM2-Audio-1.5B (requires paid endpoints)
+  FALLBACK: 'mistralai/Mistral-7B-Instruct-v0.2',
   
-  // Alternative text models if inference endpoints aren't available
-  QWEN_2_5_72B: 'Qwen/Qwen2.5-72B-Instruct',
-  MISTRAL_7B: 'mistralai/Mistral-7B-Instruct-v0.2',
+  // FUTURE: Original models (require HuggingFace Inference Endpoints - paid)
+  // QWEN_OMNI_THINKING: 'Qwen/Qwen3-Omni-30B-A3B-Thinking',
+  // LFM2_AUDIO: 'LiquidAI/LFM2-Audio-1.5B',
 } as const;
+
+// Default model for Bo AI
+export const DEFAULT_HF_MODEL = HF_MODELS.PRIMARY;
 
 export type HFModelId = typeof HF_MODELS[keyof typeof HF_MODELS];
 
@@ -27,7 +32,7 @@ export async function checkModelAvailability(modelId: string): Promise<boolean> 
     const response = await fetch(`https://api-inference.huggingface.co/models/${modelId}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+        'Authorization': `Bearer ${process.env.Huggingface_Yokk}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ inputs: 'test' }),
@@ -51,7 +56,7 @@ export async function generateTextHF(
   } = {}
 ): Promise<string> {
   const {
-    model = HF_MODELS.QWEN_2_5_72B,
+    model = HF_MODELS.PRIMARY,
     maxTokens = 1024,
     temperature = 0.7,
     systemPrompt,
@@ -94,7 +99,7 @@ export async function* streamTextHF(
   } = {}
 ): AsyncGenerator<string, void, unknown> {
   const {
-    model = HF_MODELS.QWEN_2_5_72B,
+    model = HF_MODELS.PRIMARY,
     maxTokens = 1024,
     temperature = 0.7,
     systemPrompt,
@@ -165,7 +170,7 @@ export async function chatCompletionHF(
     temperature?: number;
   } = {}
 ): Promise<string> {
-  const { model = HF_MODELS.QWEN_2_5_72B, maxTokens = 1024, temperature = 0.7 } = options;
+  const { model = HF_MODELS.PRIMARY, maxTokens = 1024, temperature = 0.7 } = options;
 
   // Extract system prompt if present
   const systemMessage = messages.find(m => m.role === 'system');
@@ -193,7 +198,7 @@ export function streamChatCompletionHF(
     temperature?: number;
   } = {}
 ): ReadableStream<Uint8Array> {
-  const { model = HF_MODELS.QWEN_2_5_72B, maxTokens = 1024, temperature = 0.7 } = options;
+  const { model = HF_MODELS.PRIMARY, maxTokens = 1024, temperature = 0.7 } = options;
 
   // Extract system prompt if present
   const systemMessage = messages.find(m => m.role === 'system');
@@ -222,7 +227,7 @@ Use language appropriate for African developers.`;
   return generateTextHF(
     `Summarize this content:\n\n${content}`,
     { 
-      model: HF_MODELS.QWEN_2_5_72B,
+      model: HF_MODELS.PRIMARY,
       systemPrompt,
       maxTokens: 256,
       temperature: 0.5,
@@ -239,7 +244,7 @@ Consider low-bandwidth contexts when suggesting solutions.`;
   return generateTextHF(
     `Explain this in simple terms:\n\n${content}`,
     { 
-      model: HF_MODELS.QWEN_2_5_72B,
+      model: HF_MODELS.PRIMARY,
       systemPrompt,
       maxTokens: 512,
       temperature: 0.6,
@@ -259,7 +264,7 @@ Support African languages like French, Wolof, Swahili, Hausa, and Nigerian Pidgi
   return generateTextHF(
     `Translate to ${targetLanguage}:\n\n${content}`,
     { 
-      model: HF_MODELS.QWEN_2_5_72B,
+      model: HF_MODELS.PRIMARY,
       systemPrompt,
       maxTokens: 512,
       temperature: 0.4,

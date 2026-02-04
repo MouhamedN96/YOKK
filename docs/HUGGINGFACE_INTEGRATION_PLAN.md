@@ -1,9 +1,11 @@
 # Hugging Face Integration Plan for YOKK/Bo AI
 
-**Document Version:** 1.0  
+**Document Version:** 1.1  
 **Created:** 2026-02-04  
-**Status:** PENDING APPROVAL  
+**Last Updated:** 2026-02-04  
+**Status:** APPROVED (Option B)  
 **Author:** v0 AI Assistant  
+**Development Approach:** Issue-Driven Development
 
 ---
 
@@ -19,6 +21,51 @@ This document outlines the plan to integrate Hugging Face models into YOKK's Bo 
 
 ### Future Upgrade Path
 When budget allows, upgrade to dedicated Hugging Face Inference Endpoints for the original models.
+
+---
+
+## Codebase State Analysis
+
+### Project Overview
+| Property | Value |
+|----------|-------|
+| **Name** | yokk-app |
+| **Version** | 0.1.0 |
+| **Framework** | Next.js 15.1.7 |
+| **React** | 19.2.0 |
+| **AI SDK** | 6.0.3 |
+| **TypeScript** | 5.9.3 |
+| **Package Manager** | npm (ESM) |
+
+### File Structure (Key AI/Integration Files)
+```
+lib/
+├── ai/
+│   ├── hybrid-router.ts      # Main AI routing logic (294 lines)
+│   └── huggingface-provider.ts # HF provider (269 lines, partially implemented)
+├── powersync/
+│   ├── connector.ts          # Fixed - graceful offline handling
+│   ├── client.ts             # Fixed - try/catch for connection
+│   ├── Provider.tsx          # React context provider
+│   └── schema.ts             # Local DB schema
+├── supabase/
+│   ├── client.ts             # Browser client
+│   ├── server.ts             # Server client
+│   └── types.ts              # TypeScript types
+app/
+├── api/bo/chat/route.ts      # Bo AI endpoint (uses hybrid-router)
+├── page.tsx                  # Main page (uses @ai-sdk/react useChat)
+└── (main)/                   # Protected routes with AuthProvider
+```
+
+### Dependencies Analysis
+| Package | Version | Status |
+|---------|---------|--------|
+| `@ai-sdk/react` | 3.0.3 | Installed, working |
+| `@ai-sdk/groq` | 3.0.1 | Installed, working |
+| `@ai-sdk/openai` | 3.0.12 | Installed (for OpenRouter) |
+| `@huggingface/inference` | 4.13.11 | Installed, needs wiring |
+| `ai` | 6.0.3 | Installed, working |
 
 ---
 
@@ -59,62 +106,144 @@ File: `lib/ai/huggingface-provider.ts` (already created)
 
 ---
 
-## Deployment Blockers Identified
+## Deployment Status & Blockers
 
-### Critical Issues (Must Fix)
-1. **Environment Variable Mismatch**
-   - Code expects: `HUGGINGFACE_API_KEY`
-   - Available: `Huggingface_Yokk`
-   - **Fix:** Update code to use correct env var name
+### Current Deployment State
+| Check | Status | Notes |
+|-------|--------|-------|
+| Build | SHOULD PASS | `ignoreBuildErrors: true` in next.config.ts |
+| TypeScript | WARNINGS | 24 files with `@ts-ignore` or `any` types |
+| Runtime | PARTIAL | HuggingFace won't work due to env var mismatch |
 
-2. **HuggingFace Provider Not Connected to Router**
-   - `hybrid-router.ts` imports HF functions but doesn't use them in routing
-   - `tier2-hf-qwen` and `tier3-hf-audio` tiers defined but route to nothing
+### Critical Issues (MUST FIX before HF works)
 
-3. **Model Availability**
-   - `Qwen3-Omni-30B-A3B-Thinking` - NOT on free Inference API
-   - `LFM2-Audio-1.5B` - NOT on free Inference API
-   - **Fix:** Use alternative models on free API
+#### Issue 1: Environment Variable Mismatch
+- **Problem:** Code expects `HUGGINGFACE_API_KEY`, but Vercel has `Huggingface_Yokk`
+- **Impact:** HuggingFace provider fails silently
+- **File:** `lib/ai/huggingface-provider.ts` line 4
+- **Fix:** Change to `process.env.Huggingface_Yokk`
+
+#### Issue 2: HuggingFace Provider Not Connected
+- **Problem:** `hybrid-router.ts` imports HF functions but never calls them
+- **Impact:** `tier2-hf-qwen` and `tier3-hf-audio` route to Groq fallback, not HF
+- **File:** `lib/ai/hybrid-router.ts` lines 185-235
+- **Fix:** Add HF routing branches in `routeAiQuery()`
+
+#### Issue 3: Wrong Model IDs
+- **Problem:** Using models not available on free Inference API
+- **Impact:** 404 errors from HuggingFace
+- **File:** `lib/ai/huggingface-provider.ts` lines 7-19
+- **Fix:** Update to `Qwen/Qwen2.5-72B-Instruct` and `mistralai/Mistral-7B-Instruct-v0.2`
 
 ### Non-Critical Issues (Can Fix Later)
-1. OpenRouter API key missing for Claude fallback
-2. PowerSync URL not configured (offline mode works fine)
-3. PostHog key missing (analytics disabled, app works)
+| Issue | Impact | Priority |
+|-------|--------|----------|
+| `OPENROUTER_API_KEY` missing | Claude premium tier unavailable | LOW |
+| `NEXT_PUBLIC_POWERSYNC_URL` missing | Offline mode only (app works) | LOW |
+| PostHog key missing | Analytics disabled | LOW |
+
+### Already Fixed (Previous Session)
+- PowerSync connector graceful handling
+- PowerSync client try/catch for connection
+- `useHomeAuth` hook for root page (outside AuthProvider)
 
 ---
 
-## Implementation Plan
+## Implementation Plan (Issue-Driven)
 
-### Phase 1: Fix Deployment Blockers
+### GitHub Issues to Create
+
+#### Issue #1: Fix HuggingFace Environment Variable
+**Labels:** `bug`, `priority-high`, `ai`
+```markdown
+## Problem
+HuggingFace provider uses wrong env var name.
+- Code: `HUGGINGFACE_API_KEY`
+- Vercel: `Huggingface_Yokk`
+
+## Acceptance Criteria
+- [ ] `lib/ai/huggingface-provider.ts` uses correct env var
+- [ ] Connection test passes
+```
+
+#### Issue #2: Update HuggingFace Model IDs
+**Labels:** `enhancement`, `priority-high`, `ai`
+```markdown
+## Problem
+Current model IDs not available on free HF Inference API.
+
+## Changes
+- `Qwen/Qwen3-Omni-30B-A3B-Thinking` -> `Qwen/Qwen2.5-72B-Instruct`
+- `LiquidAI/LFM2-Audio-1.5B` -> `mistralai/Mistral-7B-Instruct-v0.2`
+
+## Acceptance Criteria
+- [ ] Model configs updated in `huggingface-provider.ts`
+- [ ] HF_MODELS export reflects new models
+- [ ] `checkModelAvailability()` returns true for new models
+```
+
+#### Issue #3: Connect HuggingFace to AI Router
+**Labels:** `enhancement`, `priority-high`, `ai`
+```markdown
+## Problem
+`tier2-hf-qwen` and `tier3-hf-audio` defined but not routed to HF.
+
+## Changes
+Add HuggingFace routing in `routeAiQuery()`:
+- `tier2-hf-qwen` -> `streamChatCompletionHF()` with Qwen model
+- `tier3-hf-audio` -> `streamChatCompletionHF()` with Mistral model
+
+## Acceptance Criteria
+- [ ] HF tiers route to HuggingFace provider
+- [ ] Fallback to Groq works when HF fails
+- [ ] Bo AI drawer uses HF for reasoning queries
+```
+
+#### Issue #4: Create HuggingFace Test Endpoint
+**Labels:** `testing`, `priority-medium`, `ai`
+```markdown
+## Description
+Create `/api/test/hf` endpoint to verify HuggingFace integration.
+
+## Acceptance Criteria
+- [ ] Returns model availability status
+- [ ] Tests streaming response
+- [ ] Returns provider selection info
+```
+
+---
+
+### Implementation Phases
+
+#### Phase 1: Fix Critical Blockers (Issues #1-3)
 **Priority:** HIGH  
-**Estimated Effort:** Small
+**Branch:** `feature/huggingface-integration`
 
-| Task | File | Change |
-|------|------|--------|
-| 1.1 | `lib/ai/huggingface-provider.ts` | Update env var from `HUGGINGFACE_API_KEY` to `Huggingface_Yokk` |
-| 1.2 | `lib/ai/huggingface-provider.ts` | Update model IDs to use free API alternatives |
-| 1.3 | `lib/ai/hybrid-router.ts` | Connect HF tiers to actual HF provider functions |
+| Step | File | Change | Issue |
+|------|------|--------|-------|
+| 1.1 | `lib/ai/huggingface-provider.ts` | Fix env var name | #1 |
+| 1.2 | `lib/ai/huggingface-provider.ts` | Update model IDs | #2 |
+| 1.3 | `lib/ai/hybrid-router.ts` | Add HF routing logic | #3 |
+| 1.4 | Create PR | Review and merge | - |
 
-### Phase 2: Integration Testing
+#### Phase 2: Testing & Verification (Issue #4)
 **Priority:** HIGH  
-**Estimated Effort:** Medium
 
-| Task | Description |
+| Step | Description |
 |------|-------------|
-| 2.1 | Create test route `/api/test/hf` to verify HuggingFace connection |
-| 2.2 | Test model availability with `checkModelAvailability()` |
-| 2.3 | Test streaming response with Bo AI drawer |
-| 2.4 | Test fallback behavior when HF fails |
+| 2.1 | Create `/api/test/hf` endpoint |
+| 2.2 | Manual test in Bo AI drawer |
+| 2.3 | Verify fallback to Groq |
+| 2.4 | Deploy to preview |
 
-### Phase 3: Bo AI Feature Enhancement
+#### Phase 3: Enhancement (Future)
 **Priority:** MEDIUM  
-**Estimated Effort:** Medium
 
 | Task | Description |
 |------|-------------|
-| 3.1 | Update Bo system prompt for HF model specifics |
-| 3.2 | Implement @bo mention in comments using `boCommentSummary`, etc. |
-| 3.3 | Add model selection indicator in UI (which tier is active) |
+| 3.1 | Add @bo mention in comments |
+| 3.2 | Model indicator in UI |
+| 3.3 | Upgrade to dedicated endpoints (when budget allows) |
 
 ---
 
@@ -212,27 +341,32 @@ If HuggingFace integration causes issues:
 
 ---
 
-## Approval Checklist
+## Approval Status
 
-- [ ] Plan reviewed by user
-- [ ] Development approach approved (TDD / Issue-driven / Incremental)
-- [ ] Model alternatives accepted
-- [ ] Environment variable names confirmed
-- [ ] Ready to proceed with Phase 1
+### Approved Decisions
+- [x] **Option B accepted** - Use free API with alternative models
+- [x] **Development approach** - Issue-Driven Development
+- [x] **Model alternatives** - `Qwen2.5-72B-Instruct` and `Mistral-7B-Instruct-v0.2`
 
----
-
-## Next Steps After Approval
-
-1. Create GitHub Issue: "Integrate HuggingFace models into Bo AI"
-2. Create feature branch: `feature/huggingface-integration`
-3. Implement Phase 1 fixes
-4. Create PR with tests
-5. Deploy and verify
+### Pending Confirmation
+- [ ] Environment variable name: Keep `Huggingface_Yokk` or rename to `HUGGINGFACE_API_KEY`?
+- [ ] Ready to proceed with Phase 1 implementation?
 
 ---
 
-**Awaiting your approval to proceed. Please confirm:**
-1. Is Option B (free API alternatives) acceptable?
-2. Which development approach: TDD, Issue-driven, or Incremental?
-3. Any changes to the model routing logic?
+## Next Steps
+
+1. **Confirm env var approach** - Use existing `Huggingface_Yokk` or request rename
+2. **Implement Phase 1** - Fix all 3 critical issues
+3. **Create test endpoint** - Verify integration works
+4. **Deploy to preview** - Test in live environment
+5. **Create PR** - Merge to main branch
+
+---
+
+## Changelog
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2026-02-04 | Initial plan created |
+| 1.1 | 2026-02-04 | Added codebase analysis, deployment status, issue-driven workflow |

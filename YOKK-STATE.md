@@ -41,7 +41,10 @@
 5. **AI/HF:** Router defines HF tiers but doesn't route to them yet.
 
 ## 📋 PENDING PLANS
-- **HuggingFace Integration:** See `docs/HUGGINGFACE_INTEGRATION_PLAN.md` (AWAITING APPROVAL)
+- **HuggingFace Integration:** See `docs/HUGGINGFACE_INTEGRATION_PLAN.md` (APPROVED - Option B)
+  - Status: Ready for Phase 1 implementation
+  - Approach: Issue-Driven Development
+  - Models: `Qwen2.5-72B-Instruct` (primary), `Mistral-7B-Instruct-v0.2` (fallback)
 
 ## 🔗 RESOURCES
 - **Main Log:** `MIGRATION_LOG.md`

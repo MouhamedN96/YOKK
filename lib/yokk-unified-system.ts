@@ -34,7 +34,7 @@ import {
 } from '@/lib/pwa/african-pwa-optimizer';
 import { CloudflareR2Client, AfricanMediaUploader } from '@/lib/storage/cloudflare-r2';
 import { PackageHarmonizer, getDefaultAfricanConfig } from '@/lib/harmony/package-harmonizer';
-import { supabase } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 import { AppSchema } from '@/lib/powersync/schema';
 
 export interface YOKKConfig {
@@ -247,8 +247,8 @@ export class YOKKUnifiedSystem {
   /**
    * Get Supabase client
    */
-  getSupabase() {
-    return supabase;
+  getSupabaseClient() {
+    return getSupabase();
   }
   
   /**

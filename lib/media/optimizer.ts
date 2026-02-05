@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 
 /**
  * Media optimization utilities for African market constraints
@@ -98,6 +98,7 @@ export class MediaUploader {
   ): Promise<{ data: { path: string } | null; error: Error | null }> {
     // Optimize audio before upload
     const optimizedAudio = await AudioOptimizer.optimizeAudio(await audioBlob.arrayBuffer());
+    const supabase = getSupabase();
 
     const { data, error } = await supabase.storage
       .from(bucketName)
@@ -119,6 +120,7 @@ export class MediaUploader {
   ): Promise<{ data: { path: string } | null; error: Error | null }> {
     // Optimize image before upload
     const optimizedImage = await ImageOptimizer.optimizeImage(imageBlob);
+    const supabase = getSupabase();
 
     const { data, error } = await supabase.storage
       .from(bucketName)

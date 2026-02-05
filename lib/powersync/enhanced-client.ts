@@ -9,7 +9,7 @@ import {
   AbstractPowerSyncDatabase
 } from '@powersync/web';
 import type { CrudBatch } from '@powersync/common';
-import { supabase } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 import { supabaseConnector } from '@/lib/powersync/connector';
 
 // Enhanced PowerSync database with African optimizations
@@ -56,6 +56,7 @@ export class EnhancedPowerSyncDatabase extends PowerSyncDatabase {
    */
   private async uploadBatchWithRetry(batch: any[]): Promise<void> {
     let attempts = 0;
+    const supabase = getSupabase();
     
     while (attempts < this.RETRY_ATTEMPTS) {
       try {
@@ -138,6 +139,7 @@ export class EnhancedPowerSyncDatabase extends PowerSyncDatabase {
   ): Promise<void> {
     let offset = 0;
     let hasMore = true;
+    const supabase = getSupabase();
     
     while (hasMore && !controller.signal.aborted) {
       const { data, error } = await supabase
@@ -208,6 +210,7 @@ export class EnhancedPowerSyncDatabase extends PowerSyncDatabase {
 export class EnhancedPowerSyncConnector implements PowerSyncBackendConnector {
   async fetchCredentials(): Promise<any> {
     try {
+      const supabase = getSupabase();
       // Get Supabase session for PowerSync authentication
       const { data: { session }, error } = await supabase.auth.getSession();
       
@@ -252,6 +255,7 @@ export class EnhancedPowerSyncConnector implements PowerSyncBackendConnector {
 
   private async executeOperationWithRetry(op: any): Promise<void> {
     let attempts = 0;
+    const supabase = getSupabase();
     
     while (attempts < 5) { // More retries for unstable African networks
       try {

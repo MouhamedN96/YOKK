@@ -3,7 +3,7 @@ import {
   PowerSyncBackendConnector,
   UpdateType
 } from '@powersync/common';
-import { supabase } from '../supabase/client';
+import { getSupabase } from '../supabase/client';
 
 // PowerSync URL - can be empty for offline-only mode
 const POWERSYNC_URL = process.env.NEXT_PUBLIC_POWERSYNC_URL || '';
@@ -16,6 +16,9 @@ export const supabaseConnector: PowerSyncBackendConnector = {
       return null;
     }
 
+    // Get Supabase client (lazy loaded)
+    const supabase = getSupabase();
+    
     // Get Supabase session for PowerSync authentication
     const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -39,6 +42,9 @@ export const supabaseConnector: PowerSyncBackendConnector = {
     if (!pending?.crud || pending.crud.length === 0) {
       return;
     }
+
+    // Get Supabase client (lazy loaded)
+    const supabase = getSupabase();
 
     // Upload pending changes to Supabase
     for (const op of pending.crud) {

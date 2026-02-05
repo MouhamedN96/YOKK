@@ -2,14 +2,25 @@
 
 import { ReactNode, useEffect, useState } from 'react';
 import { PowerSyncContext } from '@powersync/react';
-import { db, setupPowerSync } from './client';
+import type { PowerSyncDatabase } from '@powersync/web';
 import { Loader2 } from 'lucide-react';
 
 export const PowerSyncProvider = ({ children }: { children: ReactNode }) => {
   const [ready, setReady] = useState(false);
+  const [database, setDatabase] = useState<PowerSyncDatabase | null>(null);
 
   useEffect(() => {
-    setupPowerSync().then(() => setReady(true));
+    // Dynamic import to avoid SSR issues
+    import('./client').then(async ({ getDatabase, setupPowerSync }) => {
+      const db = getDatabase();
+      setDatabase(db);
+      await setupPowerSync();
+      setReady(true);
+    }).catch((error) => {
+      console.error('Failed to initialize PowerSync:', error);
+      // Still set ready to true to allow app to function without PowerSync
+      setReady(true);
+    });
   }, []);
 
   if (!ready) {
@@ -23,6 +34,11 @@ export const PowerSyncProvider = ({ children }: { children: ReactNode }) => {
     );
   }
 
+  // If database failed to initialize, render children without PowerSync context
+  if (!database) {
+    return <>{children}</>;
+  }
+
   // @ts-expect-error React 19 types
-  return <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+  return <PowerSyncContext.Provider value={database}>{children}</PowerSyncContext.Provider>;
 };

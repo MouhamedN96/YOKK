@@ -7,5 +7,22 @@ export function createClient() {
   )
 }
 
-// Singleton for legacy/client-side only usage
-export const supabase = createClient()
+// Lazy singleton for client-side only usage (prevents SSR issues)
+let _supabaseInstance: ReturnType<typeof createBrowserClient> | null = null;
+
+export const getSupabase = () => {
+  if (typeof window === 'undefined') {
+    throw new Error('Browser Supabase client can only be used in browser environment');
+  }
+  if (!_supabaseInstance) {
+    _supabaseInstance = createClient();
+  }
+  return _supabaseInstance;
+};
+
+// Legacy export using Proxy for lazy initialization
+export const supabase = new Proxy({} as ReturnType<typeof createBrowserClient>, {
+  get(_, prop) {
+    return (getSupabase() as any)[prop];
+  }
+});

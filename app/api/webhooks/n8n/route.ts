@@ -3,30 +3,27 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { z } from 'zod'
 
-// Validate that service role key exists and we're server-side only
-if (typeof window !== 'undefined') {
-  throw new Error('Service role key must only be used server-side')
-}
+// Lazy-initialized Supabase admin client (avoids module-level env var access during build)
+let _adminClient: ReturnType<typeof createClient> | null = null
 
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured')
-}
-
-if (!process.env.N8N_BOT_USER_ID) {
-  throw new Error('N8N_BOT_USER_ID is not configured. Cannot create posts without a valid bot user.')
-}
-
-// Server-side Supabase client with service role
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+function getSupabaseAdmin() {
+  if (!_adminClient) {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured')
+    }
+    _adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    )
   }
-)
+  return _adminClient
+}
 
 // Validation schemas
 const RSSItemSchema = z.object({
@@ -109,7 +106,15 @@ function sanitizeContent(content: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Validate Content-Type
+  // 0. Validate required env vars at runtime (not build time)
+  if (!process.env.N8N_BOT_USER_ID) {
+    return NextResponse.json(
+      { error: 'N8N_BOT_USER_ID is not configured' },
+      { status: 500 }
+    )
+  }
+
+  // 1. Validate Content-Type
     const contentType = request.headers.get('content-type')
     if (!contentType?.includes('application/json')) {
       return NextResponse.json(
@@ -219,7 +224,7 @@ async function getCategoryId(categorySlug: string): Promise<string | null> {
   // Load cache if needed
   if (!categoryCache) {
     categoryCache = new Map()
-    const { data: categories } = await supabaseAdmin
+    const { data: categories } = await getSupabaseAdmin()
       .from('categories')
       .select('id, slug, name')
 
@@ -261,7 +266,7 @@ async function handleRSSFeed(data: any) {
       }
 
       // Check for duplicates
-      const { data: existing } = await supabaseAdmin
+      const { data: existing } = await getSupabaseAdmin()
         .from('posts')
         .select('id')
         .eq('title', sanitizedTitle)
@@ -277,7 +282,7 @@ async function handleRSSFeed(data: any) {
         : null
 
       // Insert post (matching actual schema)
-      const { error } = await supabaseAdmin.from('posts').insert({
+      const { error } = await getSupabaseAdmin().from('posts').insert({
         title: sanitizedTitle,
         content: sanitizedContent,
         type: 'article',
@@ -339,7 +344,7 @@ Language: ${repo.language || 'N/A'}
 [View on GitHub](${repo.url})
       `.trim())
 
-      const { error } = await supabaseAdmin.from('posts').insert({
+      const { error } = await getSupabaseAdmin().from('posts').insert({
         title,
         content,
         type: 'article',
@@ -378,7 +383,7 @@ async function handleDevToSync(data: any) {
       if (!article.title) continue
 
       // Check if exists
-      const { data: existing } = await supabaseAdmin
+      const { data: existing } = await getSupabaseAdmin()
         .from('posts')
         .select('id')
         .eq('title', article.title)
@@ -386,7 +391,7 @@ async function handleDevToSync(data: any) {
 
       if (existing && existing.length > 0) continue
 
-      const { error } = await supabaseAdmin.from('posts').insert({
+      const { error } = await getSupabaseAdmin().from('posts').insert({
         title: sanitizeContent(article.title),
         content: sanitizeContent(
           article.description || article.body_markdown?.substring(0, 500) || ''
@@ -422,7 +427,7 @@ async function handleContentPost(data: any) {
       ? await getCategoryId(validatedData.category)
       : null
 
-    const { error } = await supabaseAdmin.from('posts').insert({
+    const { error } = await getSupabaseAdmin().from('posts').insert({
       title: sanitizeContent(validatedData.title),
       content: sanitizeContent(validatedData.content),
       type: 'post',

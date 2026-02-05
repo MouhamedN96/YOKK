@@ -20,9 +20,5 @@ export const getSupabase = () => {
   return _supabaseInstance;
 };
 
-// Legacy export using Proxy for lazy initialization
-export const supabase = new Proxy({} as ReturnType<typeof createBrowserClient>, {
-  get(_, prop) {
-    return (getSupabase() as any)[prop];
-  }
-});
+// Note: Use getSupabase() instead of importing supabase directly
+// This ensures proper lazy initialization in browser environment

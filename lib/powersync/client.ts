@@ -26,12 +26,8 @@ export const getDatabase = (): PowerSyncDatabase => {
   return _db;
 };
 
-// Legacy export for compatibility (getter that lazily creates instance)
-export const db = new Proxy({} as PowerSyncDatabase, {
-  get(_, prop) {
-    return (getDatabase() as any)[prop];
-  }
-});
+// Note: Use getDatabase() instead of importing db directly
+// This ensures proper lazy initialization in browser environment
 
 export const setupPowerSync = async () => {
   // SSR guard

@@ -14,7 +14,10 @@
  * - Storage (Cloudflare R2)
  */
 
-import { EnhancedPowerSyncDatabase } from '@/lib/powersync/enhanced-client';
+// Type-only imports (safe for SSR)
+import type { EnhancedPowerSyncDatabase } from '@/lib/powersync/enhanced-client';
+
+// SSR-safe imports (no browser APIs at module level)
 import { robustAiQuery } from '@/lib/ai/hybrid-router';
 import { 
   AudioOptimizer, 
@@ -35,7 +38,7 @@ import {
 import { CloudflareR2Client, AfricanMediaUploader } from '@/lib/storage/cloudflare-r2';
 import { PackageHarmonizer, getDefaultAfricanConfig } from '@/lib/harmony/package-harmonizer';
 import { getSupabase } from '@/lib/supabase/client';
-import { AppSchema } from '@/lib/powersync/schema';
+// AppSchema is imported dynamically in initializePowerSync to avoid SSR issues
 
 export interface YOKKConfig {
   // Core services
@@ -99,32 +102,36 @@ export class YOKKUnifiedSystem {
   /**
    * Initialize PowerSync with enhanced African optimizations
    */
-  private async initializePowerSync(): Promise<EnhancedPowerSyncDatabase> {
-    const db = new EnhancedPowerSyncDatabase({
-      schema: AppSchema,
-      database: {
-        dbFilename: 'yokk_unified.db',
-      },
-      flags: {
-        enableMultiTabs: false, // Simplified for PWA lifecycle
-      }
-    });
-    
-    await db.init();
-    
-    // Seed data if empty (for demonstration)
-    const count = await db.getAll('SELECT count(*) as c FROM launches') as Array<{ c: number }>;
-    if (count[0].c === 0) {
-      console.log('🌱 Seeding initial data...');
-      await db.execute('INSERT INTO launches (id, author_id, title, tagline, image_url, upvotes, is_trending, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
-        '1', 'arch', 'DevConnect: African Developer Network', 'Building the future of tech collaboration across Africa', 'https://images.unsplash.com/photo-1556740758-90de374c12ad?w=600&auto=format&fit=crop', 1205, 1, new Date().toISOString()
-      ]);
+private async initializePowerSync(): Promise<EnhancedPowerSyncDatabase> {
+  // Dynamic imports to avoid SSR issues with PowerSync WASM
+  const { EnhancedPowerSyncDatabase, EnhancedPowerSyncConnector } = await import('@/lib/powersync/enhanced-client');
+  const { AppSchema } = await import('@/lib/powersync/schema');
+  
+  const db = new EnhancedPowerSyncDatabase({
+    schema: AppSchema,
+    database: {
+      dbFilename: 'yokk_unified.db',
+    },
+    flags: {
+      enableMultiTabs: false, // Simplified for PWA lifecycle
     }
-    
-    // Connect with enhanced connector
-    await db.connect(new (await import('@/lib/powersync/enhanced-client')).EnhancedPowerSyncConnector());
-    
-    return db;
+  });
+  
+  await db.init();
+  
+  // Seed data if empty (for demonstration)
+  const count = await db.getAll('SELECT count(*) as c FROM launches') as Array<{ c: number }>;
+  if (count[0].c === 0) {
+    console.log('Seeding initial data...');
+    await db.execute('INSERT INTO launches (id, author_id, title, tagline, image_url, upvotes, is_trending, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
+      '1', 'arch', 'DevConnect: African Developer Network', 'Building the future of tech collaboration across Africa', 'https://images.unsplash.com/photo-1556740758-90de374c12ad?w=600&auto=format&fit=crop', 1205, 1, new Date().toISOString()
+    ]);
+  }
+  
+  // Connect with enhanced connector
+  await db.connect(new EnhancedPowerSyncConnector());
+  
+  return db;
   }
   
   /**
@@ -263,6 +270,11 @@ export class YOKKUnifiedSystem {
 let yokkSystem: YOKKUnifiedSystem | null = null;
 
 export async function getYOKKSystem(): Promise<YOKKUnifiedSystem> {
+  // SSR guard - only initialize in browser
+  if (typeof window === 'undefined') {
+    throw new Error('YOKK System can only be initialized in browser environment');
+  }
+  
   if (!yokkSystem) {
     // Create config from environment variables
     const config: YOKKConfig = {

@@ -124,6 +124,11 @@ export class HarmonizedStorageService extends HarmonizedService {
   private storagePrefix: string = 'yokk_harmonized_';
   
   async getItem(key: string): Promise<any> {
+    // Return null if not in browser environment
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return null;
+    }
+    
     try {
       // Use localStorage with prefix
       const prefixedKey = this.storagePrefix + key;
@@ -149,6 +154,11 @@ export class HarmonizedStorageService extends HarmonizedService {
   }
   
   async setItem(key: string, value: any, ttlMs: number = this.config.cacheTimeoutMs): Promise<void> {
+    // Skip if not in browser environment
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return;
+    }
+    
     try {
       const prefixedKey = this.storagePrefix + key;
       const item = {
@@ -164,6 +174,11 @@ export class HarmonizedStorageService extends HarmonizedService {
   }
   
   async removeItem(key: string): Promise<void> {
+    // Skip if not in browser environment
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return;
+    }
+    
     try {
       const prefixedKey = this.storagePrefix + key;
       localStorage.removeItem(prefixedKey);
@@ -222,11 +237,13 @@ export class HarmonizedFeatureFlagService extends HarmonizedService {
     this.flags.set('low_end_optimizations', this.config.optimizeForLowEndDevices);
     this.flags.set('local_auth', this.config.useLocalAuth);
     
-    // Allow overrides from localStorage
-    for (const [flag, defaultValue] of this.flags.entries()) {
-      const storedValue = localStorage.getItem(`feature_flag_${flag}`);
-      if (storedValue !== null) {
-        this.flags.set(flag, storedValue === 'true');
+    // Allow overrides from localStorage (only in browser)
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      for (const [flag, defaultValue] of this.flags.entries()) {
+        const storedValue = localStorage.getItem(`feature_flag_${flag}`);
+        if (storedValue !== null) {
+          this.flags.set(flag, storedValue === 'true');
+        }
       }
     }
   }
@@ -237,7 +254,9 @@ export class HarmonizedFeatureFlagService extends HarmonizedService {
   
   setEnabled(flag: string, enabled: boolean): void {
     this.flags.set(flag, enabled);
-    localStorage.setItem(`feature_flag_${flag}`, enabled.toString());
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem(`feature_flag_${flag}`, enabled.toString());
+    }
   }
 }
 

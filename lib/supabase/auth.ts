@@ -1,4 +1,4 @@
-import { supabase } from './client'
+import { getSupabase } from './client'
 import type { Database } from './types'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -80,6 +80,7 @@ export const auth = {
       return { data: null, error: { message: usernameValidation.error } }
     }
 
+    const supabase = getSupabase()
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
@@ -104,6 +105,7 @@ export const auth = {
       return { data: null, error: { message: 'Password is required' } }
     }
 
+    const supabase = getSupabase()
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password,
@@ -113,24 +115,28 @@ export const auth = {
 
   // Sign out
   signOut: async () => {
+    const supabase = getSupabase()
     const { error } = await supabase.auth.signOut()
     return { error }
   },
 
   // Get current session
   getSession: async () => {
+    const supabase = getSupabase()
     const { data, error } = await supabase.auth.getSession()
     return { data, error }
   },
 
   // Get current user
   getUser: async () => {
+    const supabase = getSupabase()
     const { data, error } = await supabase.auth.getUser()
     return { data, error }
   },
 
   // Get user profile
   getUserProfile: async (userId: string): Promise<{ data: Profile | null; error: any }> => {
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -142,6 +148,7 @@ export const auth = {
 
   // Update user profile
   updateProfile: async (userId: string, updates: Partial<Profile>) => {
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from('profiles')
       .update(updates)
@@ -154,6 +161,7 @@ export const auth = {
 
   // OAuth sign in (Google, GitHub, etc.)
   signInWithOAuth: async (provider: 'google' | 'github' | 'twitter') => {
+    const supabase = getSupabase()
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -165,6 +173,7 @@ export const auth = {
 
   // Listen to auth state changes
   onAuthStateChange: (callback: (event: string, session: any) => void) => {
+    const supabase = getSupabase()
     return supabase.auth.onAuthStateChange(callback)
   },
 }

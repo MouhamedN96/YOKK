@@ -34,7 +34,7 @@ import {
 } from '@/lib/pwa/african-pwa-optimizer';
 import { CloudflareR2Client, AfricanMediaUploader } from '@/lib/storage/cloudflare-r2';
 import { PackageHarmonizer, getDefaultAfricanConfig } from '@/lib/harmony/package-harmonizer';
-import { supabase } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 import { AppSchema } from '@/lib/powersync/schema';
 
 export interface YOKKConfig {
@@ -214,7 +214,7 @@ export class YOKKUnifiedSystem {
    */
   async getSystemHealth() {
     const powerSyncStatus = this.powerSync?.currentStatus ?? 'not_initialized';
-    const pwaStatus = navigator.onLine ? 'online' : 'offline';
+    const pwaStatus = typeof navigator !== 'undefined' && navigator.onLine ? 'online' : 'offline';
     const authStatus = 'ready'; // Auth is always available via static methods
 
     return {
@@ -247,8 +247,8 @@ export class YOKKUnifiedSystem {
   /**
    * Get Supabase client
    */
-  getSupabase() {
-    return supabase;
+  getSupabaseClient() {
+    return getSupabase();
   }
   
   /**
@@ -318,4 +318,7 @@ export {
   getDefaultAfricanConfig
 };
 
-console.log('🔍 YOKK Unified System loaded and ready for integration');
+// Only log in browser environment
+if (typeof window !== 'undefined') {
+  console.log('🔍 YOKK Unified System loaded and ready for integration');
+}

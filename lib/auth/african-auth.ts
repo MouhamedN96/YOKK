@@ -1,12 +1,10 @@
-import { createClient } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 
 /**
  * Authentication utilities for African market
  * Implements WhatsApp Auth and Passkeys for improved conversion
  */
-
-const supabase = createClient();
 
 // WhatsApp Authentication
 export class WhatsAppAuth {
@@ -19,6 +17,7 @@ export class WhatsAppAuth {
     try {
       // 1. Sanitize input (remove spaces, ensure + prefix)
       const sanitized = AuthUIHelper.formatPhoneNumber(phoneNumber);
+      const supabase = getSupabase();
       
       // 2. Trigger OTP via Supabase (SMS)
       // Note: To send via WhatsApp, we would need a custom Edge Function 
@@ -43,6 +42,7 @@ export class WhatsAppAuth {
   static async verifyWithWhatsAppOTP(phoneNumber: string, otp: string): Promise<{ data?: any; error?: any }> {
     try {
       const sanitized = AuthUIHelper.formatPhoneNumber(phoneNumber);
+      const supabase = getSupabase();
       
       const { data, error } = await supabase.auth.verifyOtp({
         phone: sanitized,
@@ -171,6 +171,7 @@ export class AfricanAuthManager {
     method?: 'email' | 'phone' | 'whatsapp' | 'passkey'
   ): Promise<{ data?: any; error?: any }> {
     const authMethod = method || this.getRecommendedAuthMethods()[0];
+    const supabase = getSupabase();
     
     switch (authMethod) {
       case 'whatsapp':

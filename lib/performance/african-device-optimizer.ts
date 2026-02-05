@@ -6,6 +6,9 @@
 // Device detection for African market devices
 export class DeviceDetector {
   static isLowEndDevice(): boolean {
+    // SSR guard
+    if (typeof navigator === 'undefined') return false;
+    
     // Check for low-end device indicators common in Africa
     const userAgent = navigator.userAgent.toLowerCase();
     
@@ -28,6 +31,11 @@ export class DeviceDetector {
     processor: string | null;
     brand: string | null;
   } {
+    // SSR guard
+    if (typeof navigator === 'undefined') {
+      return { isLowEnd: false, estimatedRam: null, processor: null, brand: null };
+    }
+    
     const userAgent = navigator.userAgent;
     const isLowEnd = this.isLowEndDevice();
     
@@ -66,6 +74,9 @@ export class MemoryManager {
   private static readonly HIGH_MEMORY_THRESHOLD = 100 * 1024 * 1024; // 100MB
   
   static isMemoryConstrained(): boolean {
+    // SSR guard
+    if (typeof navigator === 'undefined') return false;
+    
     // If device memory is known to be low
     if ((navigator as any).deviceMemory && (navigator as any).deviceMemory < 2) {
       return true;
@@ -127,6 +138,9 @@ export class BundleOptimizer {
   
   // Reduce animation complexity on low-end devices
   static shouldReduceMotion(): boolean {
+    // SSR guard
+    if (typeof window === 'undefined') return false;
+    
     // Check for user preference and device capability
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return true;
@@ -197,6 +211,9 @@ export class RenderOptimizer {
 // Network optimization for 2G/3G connections common in Africa
 export class NetworkOptimizer {
   static isSlowNetwork(): boolean {
+    // SSR guard
+    if (typeof navigator === 'undefined') return false;
+    
     // Check for slow network indicators
     const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
     
@@ -253,6 +270,9 @@ export class AfricanDeviceOptimizer {
   }
   
   private static applyLowEndOptimizations(): void {
+    // SSR guard
+    if (typeof document === 'undefined') return;
+    
     // Enable memory optimization
     if (MemoryManager.shouldOptimizeForMemory()) {
       // Set up periodic memory cleanup

@@ -1,4 +1,4 @@
-import { supabase } from './client'
+import { getSupabase } from './client'
 import type { Database } from './types'
 
 type Post = Database['public']['Tables']['posts']['Row']
@@ -17,6 +17,7 @@ export const posts = {
     const { validPage, validLimit } = validatePagination(page, limit)
     const from = (validPage - 1) * validLimit
     const to = from + validLimit - 1
+    const supabase = getSupabase()
 
     const { data, error, count } = await supabase
       .from('posts')
@@ -32,6 +33,7 @@ export const posts = {
     const { validPage, validLimit } = validatePagination(page, limit)
     const from = (validPage - 1) * validLimit
     const to = from + validLimit - 1
+    const supabase = getSupabase()
 
     const { data, error, count } = await supabase
       .from('posts')
@@ -45,6 +47,7 @@ export const posts = {
 
   // Get single post by ID
   getById: async (id: string) => {
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from('posts')
       .select('*, profiles(*)')
@@ -56,6 +59,7 @@ export const posts = {
 
   // Create new post
   create: async (post: PostInsert) => {
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from('posts')
       .insert(post)
@@ -67,6 +71,7 @@ export const posts = {
 
   // Update post
   update: async (id: string, updates: Partial<PostInsert>) => {
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from('posts')
       .update(updates)
@@ -79,6 +84,7 @@ export const posts = {
 
   // Delete post
   delete: async (id: string) => {
+    const supabase = getSupabase()
     const { error } = await supabase.from('posts').delete().eq('id', id)
 
     return { error }
@@ -86,6 +92,7 @@ export const posts = {
 
   // Upvote post (with race condition handling)
   upvote: async (postId: string, userId: string) => {
+    const supabase = getSupabase()
     try {
       // Check if already upvoted
       const { data: existing, error: checkError } = await supabase
@@ -145,6 +152,7 @@ export const posts = {
     const validLimit = Math.min(100, Math.max(1, Math.floor(limit)))
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    const supabase = getSupabase()
 
     const { data, error } = await supabase
       .from('posts')
@@ -158,6 +166,7 @@ export const posts = {
 
   // Search posts
   search: async (query: string) => {
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from('posts')
       .select('*, profiles(*)')

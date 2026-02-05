@@ -13,6 +13,9 @@ export class BackgroundSyncManager {
    * Register background sync event
    */
   static async registerSync(): Promise<void> {
+    // SSR guard
+    if (typeof navigator === 'undefined') return;
+    
     if (!('serviceWorker' in navigator && 'sync' in navigator.serviceWorker)) {
       console.warn('Background Sync not supported in this browser');
       return;
@@ -76,6 +79,11 @@ export class BackgroundSyncManager {
    * Open IndexedDB for sync queue
    */
   private static async openQueueDB(): Promise<IDBDatabase> {
+    // SSR guard
+    if (typeof indexedDB === 'undefined') {
+      throw new Error('IndexedDB not available in this environment');
+    }
+    
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.QUEUE_DB_NAME, 1);
       
@@ -539,6 +547,9 @@ export class AfricanNetworkResilienceManager {
 
 // Initialize background sync when service worker is ready
 export async function initializeBackgroundSync(): Promise<void> {
+  // SSR guard
+  if (typeof navigator === 'undefined') return;
+  
   if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.ready;

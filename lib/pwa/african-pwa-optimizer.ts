@@ -371,7 +371,7 @@ export class AfricanPWAManager {
     });
     
     // Check initial connection status
-    if (!navigator.onLine) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
       document.body.classList.add('offline-mode');
     }
   }

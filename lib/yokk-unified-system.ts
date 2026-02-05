@@ -214,7 +214,7 @@ export class YOKKUnifiedSystem {
    */
   async getSystemHealth() {
     const powerSyncStatus = this.powerSync?.currentStatus ?? 'not_initialized';
-    const pwaStatus = navigator.onLine ? 'online' : 'offline';
+    const pwaStatus = typeof navigator !== 'undefined' && navigator.onLine ? 'online' : 'offline';
     const authStatus = 'ready'; // Auth is always available via static methods
 
     return {
@@ -318,4 +318,7 @@ export {
   getDefaultAfricanConfig
 };
 
-console.log('🔍 YOKK Unified System loaded and ready for integration');
+// Only log in browser environment
+if (typeof window !== 'undefined') {
+  console.log('🔍 YOKK Unified System loaded and ready for integration');
+}

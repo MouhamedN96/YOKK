@@ -36,24 +36,9 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion', '@powersync/web'],
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
     // Reduce memory pressure during build
     webpackMemoryOptimizations: true,
-  },
-  // Webpack config for memory optimization
-  webpack: (config, { isServer }) => {
-    // Handle WASM files for PowerSync
-    config.experiments = {
-      ...config.experiments,
-      asyncWebAssembly: true,
-    }
-
-    // Reduce memory during build - don't override splitChunks
-    if (!isServer) {
-      config.optimization.moduleIds = 'deterministic'
-    }
-
-    return config
   },
   async headers() {
     return [

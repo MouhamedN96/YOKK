@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { ErrorBoundary } from '@/components/error-boundary'
-import { PowerSyncProvider } from '@/lib/powersync/Provider'
 import { PostHogProvider } from '@/components/providers/PostHogProvider'
 import { PostHogPageView } from '@/components/providers/PostHogPageView'
-import YOKKInitializer from '@/components/YOKKInitializer'
 
 export const viewport: Viewport = {
   themeColor: '#E65100',
@@ -46,13 +44,10 @@ export default function RootLayout({
         <PostHogProvider>
           {/* @ts-expect-error React 19 types */}
           <ErrorBoundary>
-            <PowerSyncProvider>
-              <PostHogPageView />
-              <YOKKInitializer />
-              <div className="min-h-screen">
-                {children}
-              </div>
-            </PowerSyncProvider>
+            <PostHogPageView />
+            <div className="min-h-screen">
+              {children}
+            </div>
           </ErrorBoundary>
         </PostHogProvider>
       </body>

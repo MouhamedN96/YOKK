@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useChat } from '@ai-sdk/react'
-import { useQuery } from '@powersync/react'
+import useSWR from 'swr'
 import { ModernHeroCard, type ModernHeroCardData } from '@/components/design/cards/ModernHeroCard'
 import { MobileOptimizedCard, type MobileOptimizedCardData } from '@/components/design/cards/MobileOptimizedCard'
 import { Sidebar } from '@/components/design/sidebar/Sidebar'
@@ -12,7 +12,7 @@ import { CreatePostMenu } from '@/components/design/header/CreatePostMenu'
 import { StreakDisplay } from '@/components/design/gamification/StreakDisplay'
 import { LevelBadge } from '@/components/design/gamification/LevelBadge'
 import { Menu, Search, Bell, User, Sparkles, Rocket, MessageSquare, Flame, ChevronUp, Home as HomeIcon, Video, Briefcase, Plus, Send, Loader2 } from 'lucide-react'
-import { posts } from '@/lib/supabase/posts'
+import { createClient } from '@/lib/supabase/client'
 // Custom hook for home page that works without AuthProvider
 // This page is outside the (main) route group, so AuthProvider is not available
 const useHomeAuth = () => {
@@ -82,9 +82,17 @@ export default function Home() {
   })
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // PowerSync Data
-  const { data: launches = [] } = useQuery('SELECT * FROM launches ORDER BY upvotes DESC')
-  const { data: dbPosts = [] } = useQuery('SELECT * FROM posts ORDER BY upvotes DESC')
+  // Supabase Data Fetching with SWR
+  const { data: launches = [] } = useSWR('launches', async () => {
+    const supabase = createClient()
+    const { data } = await supabase.from('launches').select('*').order('upvotes', { ascending: false })
+    return data || []
+  })
+  const { data: dbPosts = [] } = useSWR('posts', async () => {
+    const supabase = createClient()
+    const { data } = await supabase.from('posts').select('*').order('upvotes', { ascending: false })
+    return data || []
+  })
 
   // Combine and format data
   const feedItems = useMemo(() => {

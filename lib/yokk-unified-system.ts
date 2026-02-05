@@ -5,7 +5,7 @@
  * bringing together the scattered work into a cohesive, unified architecture.
  * 
  * It orchestrates:
- * - PowerSync + Supabase integration
+ * - Supabase integration (online-first)
  * - AI Router (3-tier system)
  * - Media optimization (Opus/AVIF)
  * - Authentication (WhatsApp/Passkeys)
@@ -13,9 +13,6 @@
  * - Network resilience
  * - Storage (Cloudflare R2)
  */
-
-// Type-only imports (safe for SSR)
-import type { EnhancedPowerSyncDatabase } from '@/lib/powersync/enhanced-client';
 
 // SSR-safe imports (no browser APIs at module level)
 import { robustAiQuery } from '@/lib/ai/hybrid-router';
@@ -38,13 +35,11 @@ import {
 import { CloudflareR2Client, AfricanMediaUploader } from '@/lib/storage/cloudflare-r2';
 import { PackageHarmonizer, getDefaultAfricanConfig } from '@/lib/harmony/package-harmonizer';
 import { getSupabase } from '@/lib/supabase/client';
-// AppSchema is imported dynamically in initializePowerSync to avoid SSR issues
 
 export interface YOKKConfig {
   // Core services
   supabaseUrl: string;
   supabaseAnonKey: string;
-  powersyncUrl: string;
   groqApiKey: string;
   openrouterApiKey?: string;
   
@@ -64,7 +59,6 @@ export class YOKKUnifiedSystem {
   private harmonizer: PackageHarmonizer;
   
   // Core services
-  private powerSync?: EnhancedPowerSyncDatabase;
   private r2Client?: CloudflareR2Client;
   private mediaUploader?: AfricanMediaUploader;
   
@@ -77,61 +71,22 @@ export class YOKKUnifiedSystem {
    * Initialize the complete YOKK system
    */
   async initialize(): Promise<void> {
-    console.log('🚀 Initializing YOKK Unified System...');
+    console.log('Initializing YOKK Unified System...');
     
     // Initialize harmonization
     await this.harmonizer.initialize();
-    console.log('✅ Package harmonization initialized');
-    
-    // Initialize PowerSync with African optimizations
-    this.powerSync = await this.initializePowerSync();
-    console.log('✅ PowerSync with African optimizations initialized');
+    console.log('Package harmonization initialized');
     
     // Initialize Cloudflare R2 for zero-egress storage
     this.r2Client = new CloudflareR2Client();
     this.mediaUploader = new AfricanMediaUploader(this.r2Client);
-    console.log('✅ Cloudflare R2 storage initialized');
+    console.log('Cloudflare R2 storage initialized');
 
     // Initialize PWA with African market optimizations
     await AfricanPWAManager.initialize();
-    console.log('✅ PWA with African optimizations initialized');
+    console.log('PWA with African optimizations initialized');
 
-    console.log('🎉 YOKK Unified System fully initialized!');
-  }
-  
-  /**
-   * Initialize PowerSync with enhanced African optimizations
-   */
-private async initializePowerSync(): Promise<EnhancedPowerSyncDatabase> {
-  // Dynamic imports to avoid SSR issues with PowerSync WASM
-  const { EnhancedPowerSyncDatabase, EnhancedPowerSyncConnector } = await import('@/lib/powersync/enhanced-client');
-  const { AppSchema } = await import('@/lib/powersync/schema');
-  
-  const db = new EnhancedPowerSyncDatabase({
-    schema: AppSchema,
-    database: {
-      dbFilename: 'yokk_unified.db',
-    },
-    flags: {
-      enableMultiTabs: false, // Simplified for PWA lifecycle
-    }
-  });
-  
-  await db.init();
-  
-  // Seed data if empty (for demonstration)
-  const count = await db.getAll('SELECT count(*) as c FROM launches') as Array<{ c: number }>;
-  if (count[0].c === 0) {
-    console.log('Seeding initial data...');
-    await db.execute('INSERT INTO launches (id, author_id, title, tagline, image_url, upvotes, is_trending, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
-      '1', 'arch', 'DevConnect: African Developer Network', 'Building the future of tech collaboration across Africa', 'https://images.unsplash.com/photo-1556740758-90de374c12ad?w=600&auto=format&fit=crop', 1205, 1, new Date().toISOString()
-    ]);
-  }
-  
-  // Connect with enhanced connector
-  await db.connect(new EnhancedPowerSyncConnector());
-  
-  return db;
+    console.log('YOKK Unified System fully initialized!');
   }
   
   /**
@@ -220,12 +175,11 @@ private async initializePowerSync(): Promise<EnhancedPowerSyncDatabase> {
    * Get system health and performance metrics
    */
   async getSystemHealth() {
-    const powerSyncStatus = this.powerSync?.currentStatus ?? 'not_initialized';
     const pwaStatus = typeof navigator !== 'undefined' && navigator.onLine ? 'online' : 'offline';
-    const authStatus = 'ready'; // Auth is always available via static methods
+    const authStatus = 'ready';
 
     return {
-      powerSync: powerSyncStatus,
+      database: 'supabase',
       pwa: pwaStatus,
       auth: authStatus,
       timestamp: new Date().toISOString(),
@@ -242,13 +196,6 @@ private async initializePowerSync(): Promise<EnhancedPowerSyncDatabase> {
    */
   getConfig(): YOKKConfig {
     return { ...this.config };
-  }
-  
-  /**
-   * Get PowerSync database instance
-   */
-  getPowerSync(): EnhancedPowerSyncDatabase | undefined {
-    return this.powerSync;
   }
   
   /**
@@ -280,7 +227,6 @@ export async function getYOKKSystem(): Promise<YOKKUnifiedSystem> {
     const config: YOKKConfig = {
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
       supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-      powersyncUrl: process.env.NEXT_PUBLIC_POWERSYNC_URL || '',
       groqApiKey: process.env.GROQ_API_KEY || '',
       openrouterApiKey: process.env.OPENROUTER_API_KEY,
       
@@ -332,5 +278,5 @@ export {
 
 // Only log in browser environment
 if (typeof window !== 'undefined') {
-  console.log('🔍 YOKK Unified System loaded and ready for integration');
+  console.log('YOKK Unified System loaded and ready for integration');
 }

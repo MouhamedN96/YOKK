@@ -1,0 +1,29 @@
+# Yaatal Engine — Production Configuration
+server:
+  port: "${PORT:-8080}"
+  host: 0.0.0.0
+
+database:
+  uri: "${TURSO_DATABASE_URL}"
+  token: "${TURSO_AUTH_TOKEN}"
+
+auth:
+  jwt_secret: "${JWT_SECRET}"
+  token_expiry_hours: 168
+
+ai:
+  siliconflow_key: "${SILICONFLOW_API_KEY}"
+  huggingface_key: "${HUGGINGFACE_API_KEY}"
+  openrouter_key: "${OPENROUTER_API_KEY}"
+  anthropic_key: "${ANTHROPIC_API_KEY}"
+
+storage:
+  provider: "s3"
+  path: "${S3_BUCKET}"
+
+analytics:
+  posthog_key: "${POSTHOG_API_KEY}"
+
+push:
+  onesignal_app_id: "${ONESIGNAL_APP_ID}"
+  onesignal_rest_key: "${ONESIGNAL_REST_API_KEY}"

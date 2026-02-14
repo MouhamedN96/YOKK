@@ -1,0 +1,28 @@
+# Yaatal Engine — Development Configuration
+server:
+  port: 5150
+  host: 0.0.0.0
+
+database:
+  uri: "file:local.db"
+
+auth:
+  jwt_secret: "${JWT_SECRET:-yaatal-dev-secret-change-in-production}"
+  token_expiry_hours: 72
+
+ai:
+  siliconflow_key: "${SILICONFLOW_API_KEY}"
+  huggingface_key: "${HUGGINGFACE_API_KEY}"
+  openrouter_key: "${OPENROUTER_API_KEY}"
+  anthropic_key: "${ANTHROPIC_API_KEY}"
+
+storage:
+  provider: "disk"
+  path: "./storage"
+
+analytics:
+  posthog_key: "${POSTHOG_API_KEY}"
+
+push:
+  onesignal_app_id: "${ONESIGNAL_APP_ID}"
+  onesignal_rest_key: "${ONESIGNAL_REST_API_KEY}"

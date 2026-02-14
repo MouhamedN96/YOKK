@@ -1,0 +1,28 @@
+# Yaatal Engine — Test Configuration
+server:
+  port: 5151
+  host: 127.0.0.1
+
+database:
+  uri: ":memory:"
+
+auth:
+  jwt_secret: "test-secret-not-for-production"
+  token_expiry_hours: 1
+
+ai:
+  siliconflow_key: ""
+  huggingface_key: ""
+  openrouter_key: ""
+  anthropic_key: ""
+
+storage:
+  provider: "memory"
+  path: ""
+
+analytics:
+  posthog_key: ""
+
+push:
+  onesignal_app_id: ""
+  onesignal_rest_key: ""

@@ -1,0 +1,24 @@
+[package]
+name = "yaatal-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Shared types, models, AI router, and business logic for Yaatal Engine"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+reqwest.workspace = true
+libsql.workspace = true
+sea-orm.workspace = true
+tracing.workspace = true
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1"
+thiserror = "2"
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+mockall.workspace = true
+tokio = { workspace = true, features = ["test-util"] }

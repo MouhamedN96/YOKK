@@ -1,0 +1,19 @@
+//! Yaatal Core — shared infrastructure for African-first applications
+//!
+//! This crate provides:
+//! - Database models (Turso/libSQL via SeaORM)
+//! - AI cascade router (5-tier, offline-first)
+//! - Gamification engine (XP, levels, achievements)
+//! - Design tokens (Sunset Over Dakar palette)
+//! - Content sanitization and business logic
+
+pub mod ai;
+pub mod auth;
+pub mod design;
+pub mod gamification;
+pub mod models;
+pub mod sanitize;
+
+pub use ai::router::AiRouter;
+pub use design::tokens;
+pub use gamification::xp;

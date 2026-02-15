@@ -26,6 +26,8 @@ pub struct Model {
     pub category: Option<String>,
     pub tags: Option<String>,
     pub upvotes: i32,
+    pub comment_count: i32,
+    pub is_pinned: i32,
     pub created_at: String,
     pub updated_at: Option<String>,
 }

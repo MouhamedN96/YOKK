@@ -35,3 +35,19 @@
 - [x] cargo test --workspace passes (23/23 green)
 **Pending:**
 - [ ] PR opened and merged (gh CLI auth blocker)
+
+## Risks / Notes (Active)
+- yaatal-api is a placeholder; Loco scaffold must exist before E4 can compile.
+- Config loader now exists in yaatal-core; decide whether yaatal-api should reuse it or use its own Loco config.
+- AI router offline/2G gating and shared rate limiting are not yet defined.
+
+## Day 3 - 2026-02-15 (E2 Schema + Models)
+**Goal:** Align models with migrations and add db helpers
+**Status:** IN PROGRESS
+**Completed:**
+- [x] Added missing fields to profile and post models
+- [x] Added SeaORM models for remaining tables in 001_initial.sql
+- [x] Added db helpers for config loading, connection, and migrations
+- [x] Added serde_yaml dependency to yaatal-core
+**Pending:**
+- [ ] cargo test -p yaatal-core (cargo not available in PATH)

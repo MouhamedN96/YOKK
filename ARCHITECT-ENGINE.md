@@ -67,13 +67,21 @@ App-specific code goes in `apps/` ONLY.
 | Phase | Issue | Status | Branch |
 |-------|-------|--------|--------|
 | E1 | Scaffold workspace | DONE | e1-scaffold-workspace |
-| E2 | Database schema + models | NOT STARTED | e2-schema-models |
+| E2 | Database schema + models | IN PROGRESS | e2-schema-models |
 | E3 | AI cascade router | NOT STARTED | e3-ai-router |
 | E4 | JWT auth controller | NOT STARTED | e4-jwt-auth |
 | E5 | Posts CRUD + feed | NOT STARTED | e5-posts-feed |
 | E6 | Voice crate | NOT STARTED | e6-voice-crate |
 | E7 | Kill gate (Dioxus+cpal) | NOT STARTED | e7-kill-gate |
 | E8 | Wire YOKK PWA | NOT STARTED | e8-wire-pwa |
+
+---
+
+## RISKS / NOTES (Active)
+
+- yaatal-api is a placeholder; Loco scaffold must exist before E4 can compile.
+- Config loader now exists in yaatal-core; decide whether yaatal-api should reuse it or use its own Loco config.
+- AI router offline/2G gating and shared rate limiting are not yet defined.
 
 ---
 
@@ -109,8 +117,28 @@ App-specific code goes in `apps/` ONLY.
 - Added missing `serde_json` dependency to `yaatal-voice/Cargo.toml`
 - **cargo build --workspace**: PASSES (0 errors, 0 warnings)
 - **cargo test --workspace**: PASSES (23/23 tests green)
-**What's next:** E2 — Database schema + models (SeaORM migrations, Turso connection pool)
-**Blockers:** gh CLI still not authenticated — PR needs manual push or auth
+**What's next:** E2 - Database schema + models (SeaORM migrations, Turso connection pool)
+**Blockers:** gh CLI still not authenticated - PR needs manual push or auth
+
+### Session 003 - 2026-02-15 (Issue Hygiene)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Added active risks/notes section to guide E2-E4 planning
+- Updated SPRINT-LOG.md with the same risks/notes
+- Added Risks/Notes to GitHub issues E2, E3, E4, E7
+**What's next:** E2 - Database schema + models
+**Blockers:** None
+
+### Session 004 - 2026-02-15 (E2 Schema + Models)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Added missing model fields to align with migrations (profiles, posts)
+- Added SeaORM models for remaining tables (comments, upvotes, launches, achievements, bo_conversations, feed_items, bookmarks, user_security_keys)
+- Added db helpers for config loading, connection, and migration execution
+- Added serde_yaml dependency to yaatal-core
+ - cargo test -p yaatal-core failed to run (cargo not available in PATH)
+**What's next:** Run cargo test -p yaatal-core, then finish E2
+**Blockers:** None
 
 ---
 

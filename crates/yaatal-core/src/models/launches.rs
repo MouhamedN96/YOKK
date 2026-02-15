@@ -2,22 +2,20 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "profiles")]
+#[sea_orm(table_name = "launches")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
-    pub username: Option<String>,
-    pub display_name: Option<String>,
-    pub bio: Option<String>,
-    pub avatar_url: Option<String>,
-    pub xp: i32,
-    pub level: i32,
-    pub streak_days: i32,
-    pub last_active_at: Option<String>,
-    pub interests: Option<String>,
-    pub onboarding_complete: i32,
+    pub author_id: String,
+    pub name: String,
+    pub tagline: String,
+    pub description: Option<String>,
+    pub url: Option<String>,
+    pub logo_url: Option<String>,
+    pub category: Option<String>,
+    pub upvotes: i32,
+    pub launch_date: String,
     pub created_at: String,
-    pub updated_at: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

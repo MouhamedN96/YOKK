@@ -9,11 +9,13 @@
 
 pub mod ai;
 pub mod auth;
+pub mod db;
 pub mod design;
 pub mod gamification;
 pub mod models;
 pub mod sanitize;
 
 pub use ai::router::AiRouter;
+pub use db::{connect, connect_from_config_file, load_config_from_file, run_migrations_from_file};
 pub use design::tokens;
 pub use gamification::xp;

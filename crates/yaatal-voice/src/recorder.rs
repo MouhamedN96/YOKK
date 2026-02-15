@@ -43,6 +43,9 @@ impl VoiceRecorder {
     }
 
     pub fn start(&self) -> Result<cpal::Stream, RecorderError> {
+        // TODO: store device reference to avoid config mismatch
+        // The device and config should be reused from `new()` to ensure consistency,
+        // but cpal::Device is not Clone/Send. Consider storing device info or refactoring.
         let host = cpal::default_host();
         let device = host.default_input_device().ok_or(RecorderError::NoDevice)?;
         let config = device.default_input_config()

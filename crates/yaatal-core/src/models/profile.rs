@@ -15,9 +15,10 @@ pub struct Model {
     pub streak_days: i32,
     pub last_active_at: Option<String>,
     pub interests: Option<String>,
+    #[sea_orm(default_value = 0)]
     pub onboarding_complete: i32,
     pub created_at: String,
-    pub updated_at: Option<String>,
+    pub updated_at: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

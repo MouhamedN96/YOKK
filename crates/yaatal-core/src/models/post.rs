@@ -1,0 +1,40 @@
+use sea_orm::entity::prelude::*;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+pub enum PostType {
+    #[sea_orm(string_value = "question")]
+    Question,
+    #[sea_orm(string_value = "tutorial")]
+    Tutorial,
+    #[sea_orm(string_value = "discussion")]
+    Discussion,
+    #[sea_orm(string_value = "showcase")]
+    Showcase,
+}
+
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
+#[sea_orm(table_name = "posts")]
+pub struct Model {
+    #[sea_orm(primary_key, auto_increment = false)]
+    pub id: String,
+    pub author_id: String,
+    pub title: String,
+    pub content: String,
+    pub r#type: PostType,
+    pub category: Option<String>,
+    pub tags: Option<String>,
+    pub upvotes: i32,
+    #[sea_orm(default_value = 0)]
+    pub comment_count: i32,
+    #[sea_orm(default_value = false)]
+    pub is_pinned: bool,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {}
+
+impl ActiveModelBehavior for ActiveModel {}

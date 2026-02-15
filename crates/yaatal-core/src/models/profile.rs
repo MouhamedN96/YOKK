@@ -13,9 +13,12 @@ pub struct Model {
     pub xp: i32,
     pub level: i32,
     pub streak_days: i32,
+    pub last_active_at: Option<String>,
     pub interests: Option<String>,
+    #[sea_orm(default_value = false)]
+    pub onboarding_complete: bool,
     pub created_at: String,
-    pub updated_at: Option<String>,
+    pub updated_at: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

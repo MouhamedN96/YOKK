@@ -26,8 +26,12 @@ pub struct Model {
     pub category: Option<String>,
     pub tags: Option<String>,
     pub upvotes: i32,
+    #[sea_orm(default_value = 0)]
+    pub comment_count: i32,
+    #[sea_orm(default_value = false)]
+    pub is_pinned: bool,
     pub created_at: String,
-    pub updated_at: Option<String>,
+    pub updated_at: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

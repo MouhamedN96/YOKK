@@ -11,6 +11,9 @@ static JS_URI_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?i)javascript:").unwrap()
 });
 static DANGEROUS_TAGS_RE: LazyLock<Regex> = LazyLock::new(|| {
+    // Matches dangerous HTML tags in two forms:
+    // 1. Paired tags: <iframe>...</iframe>
+    // 2. Self-closing or unclosed tags: <iframe /> or <iframe>
     Regex::new(r"(?i)<(iframe|object|embed|form|base|meta)[^>]*>[\s\S]*?</(iframe|object|embed|form|base|meta)>|<(iframe|object|embed|form|base|meta)[^>]*/?>").unwrap()
 });
 static DATA_URI_RE: LazyLock<Regex> = LazyLock::new(|| {

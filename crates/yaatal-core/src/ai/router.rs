@@ -61,10 +61,10 @@ impl AiRouter {
     /// Route a query through the AI cascade.
     pub async fn route(&self, messages: &[Message], user_text: &str) -> Result<AiResponse, AiError> {
         let (task, _reason) = classify_task(user_text);
+        #[allow(unused_variables)]
         let sensitive = is_sensitive(user_text);
         // TODO(E3): if sensitive { skip to Tier 4+ }
         // See https://github.com/Yaatal-labs/Yaatal-Engine/issues/4
-        let _ = sensitive; // suppress unused warning until E3
         let timeout = task.timeout();
 
         // Tier 2: SiliconFlow (Liquid LFM2)

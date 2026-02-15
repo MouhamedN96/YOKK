@@ -3,7 +3,7 @@
 //! Always starts at Tier 1 (on-device) and cascades down on failure/timeout.
 //! On 2G/offline: Tier 1 only. Tiers 2-5 require 3G+.
 
-use crate::ai::classify::{AiTask, classify_task};
+use crate::ai::classify::classify_task;
 use crate::ai::sensitivity::is_sensitive;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};

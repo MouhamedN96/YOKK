@@ -1,0 +1,10 @@
+[package]
+name = "yaatal-search"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ColBERT search and retrieval for Yaatal Engine (future)"
+
+[dependencies]
+yaatal-core = { path = "../yaatal-core" }
+serde.workspace = true

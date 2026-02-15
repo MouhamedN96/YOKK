@@ -1,0 +1,12 @@
+[package]
+name = "yokk-mobile"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "YOKK mobile app — Dioxus frontend"
+
+[dependencies]
+yaatal-core = { path = "../../crates/yaatal-core" }
+yaatal-voice = { path = "../../crates/yaatal-voice" }
+serde.workspace = true
+tokio.workspace = true

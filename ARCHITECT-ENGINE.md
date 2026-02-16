@@ -140,6 +140,31 @@ App-specific code goes in `apps/` ONLY.
 **What's next:** Run cargo test -p yaatal-core, then finish E2
 **Blockers:** None
 
+### Session 005 — 2026-02-16 (Voice Crate Hardening + E2 Verification)
+**Architect:** Claude Opus 4.6
+**What happened:**
+- Verified Codex's E2 work: cargo build + cargo test pass (30 core tests green)
+- **Voice crate rewrite (yaatal-voice):**
+  - Replaced all `unwrap()` on mutex locks with `map_err` → `RecorderError::LockPoisoned`
+  - Changed WAV encoding from 32-bit float to 16-bit PCM (Whisper API compatibility)
+  - Added f32→i16 clamping conversion
+  - Added concurrent-start guard (`AlreadyRecording` error)
+  - Added device config mismatch warning in `start()`
+  - Added `is_recording()`, `sample_count()`, `sample_rate()`, `channels()` accessors
+  - `clear()` now returns `Result` instead of panicking
+  - Used `thiserror` for proper error derives
+- **Transcription rewrite:**
+  - Added `TranscriptionError` enum (Network, Api, ModelLoading, EmptyResult)
+  - Handle HuggingFace 503 "model loading" responses with estimated_time
+  - Added 30s timeout to API calls
+  - Actually measure `duration_ms` (was hardcoded to 0)
+  - Added `transcribe_with_model()` for model selection
+- Added 8 voice tests: WAV header, 16-bit PCM encoding, f32 clamping, clear, empty, error display
+- **cargo build --workspace**: 0 errors, 0 warnings
+- **cargo test --workspace**: 38/38 passing (30 core + 8 voice)
+**What's next:** E2 still needs entity relations and integration tests. E3/E6 unblocked for parallel work.
+**Blockers:** None
+
 ---
 
 ## END SESSION PROTOCOL

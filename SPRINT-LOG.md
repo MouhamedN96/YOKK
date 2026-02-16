@@ -50,4 +50,24 @@
 - [x] Added db helpers for config loading, connection, and migrations
 - [x] Added serde_yaml dependency to yaatal-core
 **Pending:**
-- [ ] cargo test -p yaatal-core (cargo not available in PATH)
+- [x] cargo test -p yaatal-core — verified in Session 005 (30 tests green)
+
+## Day 4 — 2026-02-16 (Voice Crate Hardening)
+**Goal:** Review and harden yaatal-voice for production safety
+**Status:** DONE
+**Completed:**
+- [x] Verified Codex's E2 work: cargo build + cargo test pass (30 core tests green)
+- [x] Voice recorder rewrite: replaced all unwrap() with proper error handling (RecorderError enum via thiserror)
+- [x] WAV encoding: changed from 32-bit float to 16-bit PCM (Whisper API compatibility)
+- [x] Added f32→i16 clamping conversion
+- [x] Added concurrent-start guard (AlreadyRecording error)
+- [x] Added device config mismatch warning
+- [x] Added accessors: is_recording(), sample_count(), sample_rate(), channels()
+- [x] Transcription rewrite: TranscriptionError enum (Network, Api, ModelLoading, EmptyResult)
+- [x] Handle HuggingFace 503 "model loading" responses with estimated_time
+- [x] Added 30s timeout to API calls
+- [x] Fixed duration_ms (was hardcoded to 0)
+- [x] Added transcribe_with_model() for model selection
+- [x] Added 8 voice tests: WAV header, 16-bit PCM, f32 clamping, clear, empty, error display
+- [x] cargo build --workspace: 0 errors, 0 warnings
+- [x] cargo test --workspace: 38/38 passing (30 core + 8 voice)

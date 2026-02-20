@@ -102,3 +102,27 @@
 - [ ] Continue E2 entity relations/integration test work
 **Blockers:**
 - None
+
+## Day 7 - 2026-02-20 (ColBERT Zero-Shot Baseline + Sidecar)
+**Goal:** Move `yaatal-search` from placeholder to executable zero-shot retrieval baseline
+**Status:** DONE
+**Completed:**
+- [x] Added zero-shot retrieval scaffold in `crates/yaatal-search/src/zero_shot.rs` with `MRR@k`, `Recall@k`, `nDCG@k`
+- [x] Added retrieval backend contract (`Retriever`) and baseline evaluator (`evaluate_zero_shot`)
+- [x] Added Python ColBERT sidecar in `scripts/colbert_sidecar.py` (`/health`, `/index`, `/search`)
+- [x] Added Rust HTTP adapter `ColbertHttpRetriever` in `crates/yaatal-search/src/python_sidecar.rs`
+- [x] Updated `crates/yaatal-search/Cargo.toml` for blocking `reqwest` + `serde_json`
+- [x] Added docs:
+  - `docs/colbert-zero-shot.md`
+  - `docs/unsloth-on-device-deployment.md`
+  - `README.md` docs links
+- [x] Verification:
+  - `python -m py_compile scripts/colbert_sidecar.py` passes
+  - `cargo fmt --all --check` passes
+  - `cargo clippy -p yaatal-search --all-targets -- -D warnings` passes
+  - `cargo test -p yaatal-search --offline` passes (3 tests)
+**Pending:**
+- [ ] Run full workspace gates once `libsql-ffi` `cp` build dependency is available in PATH
+- [ ] Execute baseline metrics on real Yaatal labeled retrieval dataset
+**Blockers:**
+- Workspace `clippy/test` blocked by missing `cp` command required by `libsql-ffi` build script

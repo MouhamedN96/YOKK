@@ -214,6 +214,32 @@ App-specific code goes in `apps/` ONLY.
 - Updated `README.md` and `docs/dev-workflow-status.md` with final Windows troubleshooting guidance
 **What's next:** Keep E2 in progress and continue entity relations/integration test work
 **Blockers:** None (local gate verification succeeded with documented Windows setup)
+
+### Session 009 - 2026-02-20 (ColBERT Zero-Shot + Python Sidecar)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Implemented `yaatal-search` zero-shot retrieval evaluation scaffold:
+  - `crates/yaatal-search/src/zero_shot.rs`
+  - Metrics: `MRR@k`, `Recall@k`, `nDCG@k`
+  - Added unit tests for perfect/partial/invalid cases
+- Added Python sidecar integration for ColBERT retrieval:
+  - `scripts/colbert_sidecar.py` (`/health`, `/index`, `/search`)
+  - `crates/yaatal-search/src/python_sidecar.rs` (`ColbertHttpRetriever`)
+  - Exported modules from `crates/yaatal-search/src/lib.rs`
+- Updated search crate dependencies for HTTP integration:
+  - `crates/yaatal-search/Cargo.toml` (`reqwest` blocking + `serde_json`)
+- Added deployment and retrieval docs:
+  - `docs/colbert-zero-shot.md`
+  - `docs/unsloth-on-device-deployment.md`
+  - updated `README.md` docs references
+- Verification:
+  - `python -m py_compile scripts/colbert_sidecar.py`: PASS
+  - `cargo fmt --all --check`: PASS
+  - `cargo clippy -p yaatal-search --all-targets -- -D warnings`: PASS
+  - `cargo test -p yaatal-search --offline`: PASS (3 tests)
+  - Workspace gates still blocked by local `libsql-ffi` build-script `cp` dependency in PATH
+**What's next:** Plug real labeled Yaatal retrieval dataset into sidecar-backed baseline runs; decide serving strategy for ColBERT in app environments
+**Blockers:** Full workspace verification blocked by missing `cp` command required by `libsql-ffi` build script
 ---
 
 ## END SESSION PROTOCOL

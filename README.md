@@ -88,6 +88,8 @@ Agent usage examples:
 
 - `docs/agent-usage.md`
 - `docs/dev-workflow-status.md`
+- `docs/unsloth-on-device-deployment.md`
+- `docs/colbert-zero-shot.md`
 
 ### Dev Notes (Windows)
 

@@ -12,13 +12,13 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum AiError {
-    #[error("All tiers exhausted")]  
+    #[error("All tiers exhausted")]
     AllTiersExhausted,
-    #[error("Tier {tier} failed: {reason}")]  
+    #[error("Tier {tier} failed: {reason}")]
     TierFailed { tier: u8, reason: String },
-    #[error("Request error: {0}")]  
+    #[error("Request error: {0}")]
     Request(#[from] reqwest::Error),
-    #[error("Timeout after {0:?}")]  
+    #[error("Timeout after {0:?}")]
     Timeout(Duration),
 }
 
@@ -60,52 +60,86 @@ impl AiRouter {
     }
 
     /// Route a query through the AI cascade.
-    pub async fn route(&self, messages: &[Message], user_text: &str) -> Result<AiResponse, AiError> {
+    pub async fn route(
+        &self,
+        messages: &[Message],
+        user_text: &str,
+    ) -> Result<AiResponse, AiError> {
         let (task, _reason) = classify_task(user_text);
         let _sensitive = is_sensitive(user_text);
         let timeout = task.timeout();
 
         // Tier 2: SiliconFlow (Liquid LFM2)
         if let Some(ref key) = self.config.siliconflow_key {
-            match self.call_openai_compatible(
-                "https://api.siliconflow.cn/v1/chat/completions",
-                key, "liquid/lfm-2-1.2b-chat", messages, timeout,
-            ).await {
-                Ok(content) => return Ok(AiResponse {
-                    content, tier_used: 2,
-                    model: "liquid/lfm-2-1.2b-chat".into(),
-                    task: format!("{:?}", task), latency_ms: 0,
-                }),
+            match self
+                .call_openai_compatible(
+                    "https://api.siliconflow.cn/v1/chat/completions",
+                    key,
+                    "liquid/lfm-2-1.2b-chat",
+                    messages,
+                    timeout,
+                )
+                .await
+            {
+                Ok(content) => {
+                    return Ok(AiResponse {
+                        content,
+                        tier_used: 2,
+                        model: "liquid/lfm-2-1.2b-chat".into(),
+                        task: format!("{:?}", task),
+                        latency_ms: 0,
+                    })
+                }
                 Err(e) => tracing::warn!("Tier 2 failed: {}", e),
             }
         }
 
         // Tier 3: Qwen Omni (SiliconFlow)
         if let Some(ref key) = self.config.siliconflow_key {
-            match self.call_openai_compatible(
-                "https://api.siliconflow.cn/v1/chat/completions",
-                key, "Qwen/Qwen2.5-72B-Instruct", messages, timeout,
-            ).await {
-                Ok(content) => return Ok(AiResponse {
-                    content, tier_used: 3,
-                    model: "Qwen/Qwen2.5-72B-Instruct".into(),
-                    task: format!("{:?}", task), latency_ms: 0,
-                }),
+            match self
+                .call_openai_compatible(
+                    "https://api.siliconflow.cn/v1/chat/completions",
+                    key,
+                    "Qwen/Qwen2.5-72B-Instruct",
+                    messages,
+                    timeout,
+                )
+                .await
+            {
+                Ok(content) => {
+                    return Ok(AiResponse {
+                        content,
+                        tier_used: 3,
+                        model: "Qwen/Qwen2.5-72B-Instruct".into(),
+                        task: format!("{:?}", task),
+                        latency_ms: 0,
+                    })
+                }
                 Err(e) => tracing::warn!("Tier 3 failed: {}", e),
             }
         }
 
         // Tier 5: HuggingFace (Mistral fallback)
         if let Some(ref key) = self.config.huggingface_key {
-            match self.call_openai_compatible(
-                "https://api-inference.huggingface.co/v1/chat/completions",
-                key, "mistralai/Mistral-7B-Instruct-v0.2", messages, timeout,
-            ).await {
-                Ok(content) => return Ok(AiResponse {
-                    content, tier_used: 5,
-                    model: "mistralai/Mistral-7B-Instruct-v0.2".into(),
-                    task: format!("{:?}", task), latency_ms: 0,
-                }),
+            match self
+                .call_openai_compatible(
+                    "https://api-inference.huggingface.co/v1/chat/completions",
+                    key,
+                    "mistralai/Mistral-7B-Instruct-v0.2",
+                    messages,
+                    timeout,
+                )
+                .await
+            {
+                Ok(content) => {
+                    return Ok(AiResponse {
+                        content,
+                        tier_used: 5,
+                        model: "mistralai/Mistral-7B-Instruct-v0.2".into(),
+                        task: format!("{:?}", task),
+                        latency_ms: 0,
+                    })
+                }
                 Err(e) => tracing::warn!("Tier 5 failed: {}", e),
             }
         }
@@ -113,20 +147,37 @@ impl AiRouter {
         Err(AiError::AllTiersExhausted)
     }
 
-    async fn call_openai_compatible(&self, endpoint: &str, api_key: &str, model: &str, messages: &[Message], timeout: Duration) -> Result<String, AiError> {
+    async fn call_openai_compatible(
+        &self,
+        endpoint: &str,
+        api_key: &str,
+        model: &str,
+        messages: &[Message],
+        timeout: Duration,
+    ) -> Result<String, AiError> {
         let body = serde_json::json!({
             "model": model, "messages": messages,
             "max_tokens": 1024, "temperature": 0.7,
         });
-        let response = self.client.post(endpoint)
+        let response = self
+            .client
+            .post(endpoint)
             .header("Authorization", format!("Bearer {}", api_key))
             .header("Content-Type", "application/json")
-            .timeout(timeout).json(&body).send().await?;
+            .timeout(timeout)
+            .json(&body)
+            .send()
+            .await?;
         let json: serde_json::Value = response.json().await?;
         let content = json["choices"][0]["message"]["content"]
-            .as_str().unwrap_or("").to_string();
+            .as_str()
+            .unwrap_or("")
+            .to_string();
         if content.is_empty() {
-            return Err(AiError::TierFailed { tier: 0, reason: "Empty response".into() });
+            return Err(AiError::TierFailed {
+                tier: 0,
+                reason: "Empty response".into(),
+            });
         }
         Ok(content)
     }

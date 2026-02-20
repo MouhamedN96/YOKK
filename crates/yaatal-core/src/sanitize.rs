@@ -1,15 +1,11 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
-static SCRIPT_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)<script[^>]*>[\s\S]*?</script>").unwrap()
-});
-static ON_ATTR_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"on\w+\s*=\s*["'][^"']*["']"#).unwrap()
-});
-static JS_URI_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"javascript:").unwrap()
-});
+static SCRIPT_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)<script[^>]*>[\s\S]*?</script>").unwrap());
+static ON_ATTR_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"on\w+\s*=\s*["'][^"']*["']"#).unwrap());
+static JS_URI_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"javascript:").unwrap());
 
 pub fn sanitize_content(content: &str) -> String {
     let no_script = SCRIPT_RE.replace_all(content, "");

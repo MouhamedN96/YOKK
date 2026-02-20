@@ -34,7 +34,9 @@ pub async fn connect(database_uri: &str) -> Result<DatabaseConnection, DbError> 
     Ok(conn)
 }
 
-pub async fn connect_from_config_file(path: impl AsRef<Path>) -> Result<DatabaseConnection, DbError> {
+pub async fn connect_from_config_file(
+    path: impl AsRef<Path>,
+) -> Result<DatabaseConnection, DbError> {
     let config = load_config_from_file(path)?;
     connect(&config.database.uri).await
 }

@@ -41,10 +41,7 @@ pub async fn transcribe_with_model(
     audio_bytes: &[u8],
     model: &str,
 ) -> Result<TranscriptionResult, TranscriptionError> {
-    let url = format!(
-        "https://api-inference.huggingface.co/models/{}",
-        model
-    );
+    let url = format!("https://api-inference.huggingface.co/models/{}", model);
 
     let start = std::time::Instant::now();
 

@@ -1,24 +1,18 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
-static SCRIPT_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)<script[^>]*>[\s\S]*?</script>").unwrap()
-});
-static ON_ATTR_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?i)on\w+\s*=\s*(?:"[^"]*"|'[^']*'|\S+)"#).unwrap()
-});
-static JS_URI_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)javascript:").unwrap()
-});
+static SCRIPT_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)<script[^>]*>[\s\S]*?</script>").unwrap());
+static ON_ATTR_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"(?i)on\w+\s*=\s*(?:"[^"]*"|'[^']*'|\S+)"#).unwrap());
+static JS_URI_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)javascript:").unwrap());
 static DANGEROUS_TAGS_RE: LazyLock<Regex> = LazyLock::new(|| {
     // Matches dangerous HTML tags in two forms:
     // 1. Paired tags: <iframe>...</iframe>
     // 2. Self-closing or unclosed tags: <iframe /> or <iframe>
     Regex::new(r"(?i)<(iframe|object|embed|form|base|meta)[^>]*>[\s\S]*?</(iframe|object|embed|form|base|meta)>|<(iframe|object|embed|form|base|meta)[^>]*/?>").unwrap()
 });
-static DATA_URI_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)data:text/html").unwrap()
-});
+static DATA_URI_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)data:text/html").unwrap());
 
 pub fn sanitize_content(content: &str) -> String {
     let no_script = SCRIPT_RE.replace_all(content, "");

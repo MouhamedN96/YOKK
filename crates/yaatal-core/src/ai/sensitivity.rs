@@ -4,11 +4,20 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
-const SENSITIVITY_KEYWORDS: &[&str] = &["quantization","finetuning","offline ai","edgeai","cloud computing","crypto","blockchain","legal","privacy","deep research",];
+const SENSITIVITY_KEYWORDS: &[&str] = &[
+    "quantization",
+    "finetuning",
+    "offline ai",
+    "edgeai",
+    "cloud computing",
+    "crypto",
+    "blockchain",
+    "legal",
+    "privacy",
+    "deep research",
+];
 
-static API_WORD_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"\bapi\b|\bapis\b").unwrap()
-});
+static API_WORD_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bapi\b|\bapis\b").unwrap());
 
 /// Check if text contains sensitive topics requiring higher-tier models.
 pub fn is_sensitive(text: &str) -> bool {

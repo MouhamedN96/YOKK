@@ -32,7 +32,8 @@ impl VoiceRecorder {
     pub fn new() -> Result<Self, RecorderError> {
         let host = cpal::default_host();
         let device = host.default_input_device().ok_or(RecorderError::NoDevice)?;
-        let config = device.default_input_config()
+        let config = device
+            .default_input_config()
             .map_err(|e| RecorderError::BuildStream(e.to_string()))?;
         Ok(Self {
             samples: Arc::new(Mutex::new(Vec::new())),
@@ -45,7 +46,9 @@ impl VoiceRecorder {
     pub fn start(&self) -> Result<cpal::Stream, RecorderError> {
         // Guard against concurrent recording sessions
         {
-            let mut is_recording = self.recording.lock()
+            let mut is_recording = self
+                .recording
+                .lock()
                 .map_err(|_| RecorderError::LockPoisoned)?;
             if *is_recording {
                 return Err(RecorderError::AlreadyRecording);
@@ -55,39 +58,46 @@ impl VoiceRecorder {
 
         let host = cpal::default_host();
         let device = host.default_input_device().ok_or(RecorderError::NoDevice)?;
-        let config = device.default_input_config()
+        let config = device
+            .default_input_config()
             .map_err(|e| RecorderError::BuildStream(e.to_string()))?;
 
         // Validate config matches what we stored in new()
         if config.sample_rate().0 != self.sample_rate || config.channels() != self.channels {
             tracing::warn!(
                 "Audio device config changed: expected {}Hz/{}ch, got {}Hz/{}ch",
-                self.sample_rate, self.channels,
-                config.sample_rate().0, config.channels()
+                self.sample_rate,
+                self.channels,
+                config.sample_rate().0,
+                config.channels()
             );
         }
 
         let samples = self.samples.clone();
         let recording = self.recording.clone();
-        let stream = device.build_input_stream(
-            &config.into(),
-            move |data: &[f32], _: &cpal::InputCallbackInfo| {
-                if let Ok(mut buffer) = samples.lock() {
-                    buffer.extend_from_slice(data);
-                }
-                // If lock is poisoned, silently drop frames — logging in
-                // the audio callback would block and cause worse problems.
-            },
-            move |err| {
-                tracing::error!("Audio stream error: {}", err);
-                // Mark recording as stopped on stream error
-                if let Ok(mut r) = recording.lock() {
-                    *r = false;
-                }
-            },
-            None,
-        ).map_err(|e| RecorderError::BuildStream(e.to_string()))?;
-        stream.play().map_err(|e| RecorderError::BuildStream(e.to_string()))?;
+        let stream = device
+            .build_input_stream(
+                &config.into(),
+                move |data: &[f32], _: &cpal::InputCallbackInfo| {
+                    if let Ok(mut buffer) = samples.lock() {
+                        buffer.extend_from_slice(data);
+                    }
+                    // If lock is poisoned, silently drop frames — logging in
+                    // the audio callback would block and cause worse problems.
+                },
+                move |err| {
+                    tracing::error!("Audio stream error: {}", err);
+                    // Mark recording as stopped on stream error
+                    if let Ok(mut r) = recording.lock() {
+                        *r = false;
+                    }
+                },
+                None,
+            )
+            .map_err(|e| RecorderError::BuildStream(e.to_string()))?;
+        stream
+            .play()
+            .map_err(|e| RecorderError::BuildStream(e.to_string()))?;
         Ok(stream)
     }
 
@@ -101,7 +111,9 @@ impl VoiceRecorder {
             *r = false;
         }
 
-        let samples = self.samples.lock()
+        let samples = self
+            .samples
+            .lock()
             .map_err(|_| RecorderError::LockPoisoned)?
             .clone();
 
@@ -124,16 +136,20 @@ impl VoiceRecorder {
                 // Clamp and convert f32 -> i16
                 let clamped = sample.clamp(-1.0, 1.0);
                 let pcm = (clamped * i16::MAX as f32) as i16;
-                writer.write_sample(pcm)
+                writer
+                    .write_sample(pcm)
                     .map_err(|e| RecorderError::Encoding(e.to_string()))?;
             }
-            writer.finalize().map_err(|e| RecorderError::Encoding(e.to_string()))?;
+            writer
+                .finalize()
+                .map_err(|e| RecorderError::Encoding(e.to_string()))?;
         }
         Ok(cursor.into_inner())
     }
 
     pub fn clear(&self) -> Result<(), RecorderError> {
-        self.samples.lock()
+        self.samples
+            .lock()
             .map_err(|_| RecorderError::LockPoisoned)?
             .clear();
         Ok(())
@@ -234,8 +250,8 @@ mod tests {
         let wav = recorder.stop_and_encode_wav().unwrap();
         let mut reader = hound::WavReader::new(std::io::Cursor::new(&wav)).unwrap();
         let decoded: Vec<i16> = reader.samples::<i16>().map(|s| s.unwrap()).collect();
-        assert_eq!(decoded[0], i16::MAX);  // 2.0 clamped to 1.0 -> MAX
+        assert_eq!(decoded[0], i16::MAX); // 2.0 clamped to 1.0 -> MAX
         assert_eq!(decoded[1], -i16::MAX); // -2.0 clamped to -1.0 -> -MAX
-        assert_eq!(decoded[2], 0);         // 0.0 -> 0
+        assert_eq!(decoded[2], 0); // 0.0 -> 0
     }
 }

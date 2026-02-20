@@ -58,6 +58,52 @@ Config files are in `config/`:
 - `test.yaml` — tests (in-memory DB)
 - `production.yaml` — deployed (Turso, S3, real keys)
 
+## Local AI Skills
+
+This repository includes a model-agnostic local skills system:
+
+- `AGENTS.md` (canonical instructions for coding agents)
+- `skills/manifest.yaml` (skill registry)
+- `skills/rust-e2e-ai-agent/SKILL.md` (Rust end-to-end workflow)
+
+Entry files for specific models also point to the same source:
+
+- `CLAUDE.md`
+- `CODEX.md`
+
+Validation commands (run from repo root):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\validate-skills-manifest.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\validate-skill-docs.ps1
+```
+
+Related CI workflows:
+
+- `.github/workflows/validate-skills-manifest.yml`
+- `.github/workflows/validate-skill-docs.yml`
+- `.github/workflows/rust-ci.yml`
+
+Agent usage examples:
+
+- `docs/agent-usage.md`
+- `docs/dev-workflow-status.md`
+
+### Dev Notes (Windows)
+
+If Cargo fails in OneDrive-backed paths or native builds on Windows:
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$env:TEMP\yaatal-cargo-home" | Out-Null
+New-Item -ItemType Directory -Force -Path "$env:TEMP\yaatal-target" | Out-Null
+$env:CARGO_HOME = "$env:TEMP\yaatal-cargo-home"
+$env:CARGO_TARGET_DIR = "$env:TEMP\yaatal-target"
+cargo check --workspace
+```
+
+Also ensure a `cp` command is available in PATH for `libsql-ffi` build scripts
+(Git for Windows typically provides this).
+
 ## License
 
 MIT OR Apache-2.0

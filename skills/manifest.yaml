@@ -1,0 +1,12 @@
+version: 1
+skills:
+  - name: rust-e2e-ai-agent
+    path: skills/rust-e2e-ai-agent/SKILL.md
+    description: End-to-end Rust development workflow for AI coding agents.
+    tags:
+      - rust
+      - cargo
+      - clippy
+      - testing
+      - ci
+      - ai-agent

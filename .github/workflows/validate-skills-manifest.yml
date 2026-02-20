@@ -1,0 +1,31 @@
+name: Validate Skills Manifest
+
+on:
+  pull_request:
+    paths:
+      - "skills/**"
+      - "AGENTS.md"
+      - "CLAUDE.md"
+      - "CODEX.md"
+      - "scripts/validate-skills-manifest.ps1"
+      - ".github/workflows/validate-skills-manifest.yml"
+  push:
+    paths:
+      - "skills/**"
+      - "AGENTS.md"
+      - "CLAUDE.md"
+      - "CODEX.md"
+      - "scripts/validate-skills-manifest.ps1"
+      - ".github/workflows/validate-skills-manifest.yml"
+  workflow_dispatch:
+
+jobs:
+  validate-skills-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate local skills manifest paths
+        shell: pwsh
+        run: ./scripts/validate-skills-manifest.ps1

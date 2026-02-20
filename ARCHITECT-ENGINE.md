@@ -165,6 +165,56 @@ App-specific code goes in `apps/` ONLY.
 **What's next:** E2 still needs entity relations and integration tests. E3/E6 unblocked for parallel work.
 **Blockers:** None
 
+### Session 006 - 2026-02-16 (Rebase Cleanup + Handoff)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Found in-progress rebase on e1-scaffold-workspace with conflicts
+- Created safety branch backup/rebase-wip
+- Aborted rebase and returned to e1-scaffold-workspace
+**What's next:** Decide whether to merge or rebase origin/e1-scaffold-workspace into local (ahead 7, behind 2), then resume E3 or finish E2 cleanup
+**Blockers:** None
+
+### Session 007 - 2026-02-19 (Skills + CI Workflow Alignment)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Added model-agnostic skills governance docs and references:
+  - `AGENTS.md`, `CLAUDE.md`, `CODEX.md`, `architect.md`
+  - `skills/manifest.yaml`, `skills/rust-e2e-ai-agent/SKILL.md`, `skills/README.md`
+- Added skills validation automation:
+  - `scripts/validate-skills-manifest.ps1`
+  - `scripts/validate-skill-docs.ps1`
+  - `.github/workflows/validate-skills-manifest.yml`
+  - `.github/workflows/validate-skill-docs.yml`
+- Added Rust CI workflow:
+  - `.github/workflows/rust-ci.yml` (`fmt`, `check`, `clippy`, `test`)
+- Added implementation docs:
+  - `docs/agent-usage.md`
+  - `docs/dev-workflow-status.md`
+  - updated `README.md` local skills + troubleshooting section
+- Verification:
+  - Skills validators pass
+  - `cargo fmt --all` applied successfully
+  - `cargo fmt --all --check` passes
+  - `cargo check`, `cargo clippy`, `cargo test` blocked by missing native C compiler required by `libsql-ffi`
+**What's next:** Install native C build tooling on local dev machine/runner, then rerun `cargo check --workspace`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace`
+**Blockers:** Local environment missing compiler toolchain for `libsql-ffi` build script
+
+### Session 008 - 2026-02-19 (Windows Build Remediation + Gate Verification)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Verified MSVC toolchain availability (`cl.exe`) via Visual Studio Build Tools developer shell
+- Diagnosed OneDrive path issue causing non-writable cargo build output directories
+- Diagnosed `libsql-ffi` Windows build-script requirement for `cp` command
+- Ran workspace gates with Windows-safe environment:
+  - `CARGO_HOME` and `CARGO_TARGET_DIR` moved to `%TEMP%`
+  - `cargo check --workspace`: PASS
+  - `cargo clippy --workspace --all-targets -- -D warnings`: PASS
+  - `cargo test --workspace`: PASS (37 tests)
+- Fixed clippy failure in `crates/yaatal-core/src/design/tokens.rs` by replacing runtime constant assertion test with a const assertion
+- Updated `README.md` and `docs/dev-workflow-status.md` with final Windows troubleshooting guidance
+**What's next:** Keep E2 in progress and continue entity relations/integration test work
+**Blockers:** None (local gate verification succeeded with documented Windows setup)
+
 ---
 
 ## END SESSION PROTOCOL

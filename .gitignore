@@ -31,3 +31,6 @@ Thumbs.db
 
 # Test artifacts
 /coverage
+
+# Local cargo cache override
+/.local-cargo-home

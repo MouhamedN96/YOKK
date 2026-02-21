@@ -240,6 +240,39 @@ App-specific code goes in `apps/` ONLY.
   - Workspace gates still blocked by local `libsql-ffi` build-script `cp` dependency in PATH
 **What's next:** Plug real labeled Yaatal retrieval dataset into sidecar-backed baseline runs; decide serving strategy for ColBERT in app environments
 **Blockers:** Full workspace verification blocked by missing `cp` command required by `libsql-ffi` build script
+
+### Session 010 - 2026-02-21 (WAXAL + Trilingual Retrieval Experiments, Notebook Handoff)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Installed and used Hugging Face workflow skills for dataset querying, trainer workflow guidance, and metric tracking:
+  - `hugging-face-datasets`
+  - `hugging-face-model-trainer`
+  - `hugging-face-trackio`
+- Added runnable experiment scripts:
+  - `scripts/run_lfm_colbert_waxal.py` (WAXAL zero-shot + optional fine-tune + post-eval)
+  - `scripts/run_lfm_colbert_fr_en_wo_iterations.py` (FR/EN/WO + mixed-query zero-shot iterations)
+  - `scripts/build_trilingual_synthetic_corpus.py` (HF trilingual corpus + synthetic code-switch pairs)
+- Added code-switch evaluation mode to WAXAL run path (`plain`, `codeswitch`, `both`).
+- Executed WAXAL run artifacts and metrics:
+  - `artifacts/lfm_colbert_waxal/run-20260221-052711/metrics.json`
+  - Codeswitch slice improved slightly post-finetune (`dMRR +0.0100`, `dnDCG +0.0077`) while plain slice regressed.
+- Executed trilingual zero-shot iteration run:
+  - `artifacts/lfm_colbert_fr_en_wo/run-20260221-054839/metrics.json`
+  - Strong Wolof/mix retrieval and weak English/French retrieval against Wolof-indexed docs.
+- Built reusable corpus from HF trilingual source + synthetic mixed queries:
+  - `data/corpus/fr_en_wo_v1/manifest.json` (`2000` docs, `8000` query/doc pairs).
+- Added visual/report assets for handoff:
+  - `artifacts/reports/lfm_colbert_summary.html`
+  - `notebooks/lfm_colbert_test_results.ipynb`
+- Updated Unsloth-facing Liquid ColBERT notebook with WAXAL + trilingual evaluation flow and optional quick fine-tune cell:
+  - `notebooks/nb/💧_LFM2_ColBERT_350M_Inference.ipynb`
+**What's next:**
+- Replace synthetic code-switch query generation with real production code-switched user query samples.
+- Add hard-negative mining for EN/FR -> WO retrieval alignment in fine-tune batches.
+- Run full Unsloth GPU notebook training loop externally (local GPU VRAM is insufficient for stable fine-tune path).
+**Blockers:**
+- Local Python 3.13 + `pylate` compatibility constraints required Python 3.12 runtime for experiments.
+- Local Unsloth run path needs CUDA-enabled torch wheel profile; local checks defaulted to CPU torch in this environment.
 ---
 
 ## END SESSION PROTOCOL

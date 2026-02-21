@@ -126,3 +126,53 @@
 - [ ] Execute baseline metrics on real Yaatal labeled retrieval dataset
 **Blockers:**
 - Workspace `clippy/test` blocked by missing `cp` command required by `libsql-ffi` build script
+
+## Day 8 - 2026-02-21 (WAXAL + Trilingual Retrieval Experiments + Handoff)
+**Goal:** Execute real retrieval experiments for ColBERT and produce runnable handoff assets (scripts + notebook + visual outputs)
+**Status:** DONE
+**Completed:**
+- [x] Installed HF workflow skills for this track (`hugging-face-datasets`, `hugging-face-model-trainer`, `hugging-face-trackio`)
+- [x] Added experiment runner:
+  - `scripts/run_lfm_colbert_waxal.py`
+  - Includes WAXAL zero-shot, optional quick fine-tune, post-finetune eval, and metrics/report export
+- [x] Added code-switch benchmark mode for WAXAL (`plain`, `codeswitch`, `both`)
+- [x] Added trilingual iteration runner:
+  - `scripts/run_lfm_colbert_fr_en_wo_iterations.py`
+  - Evaluates `english`, `french`, `wolof`, `fr_en_wo_mix`
+- [x] Added corpus builder:
+  - `scripts/build_trilingual_synthetic_corpus.py`
+  - Output: `data/corpus/fr_en_wo_v1` (`documents.jsonl`, `queries.jsonl`, `pairs.parquet`, `manifest.json`)
+- [x] Ran WAXAL experiment and saved artifacts:
+  - `artifacts/lfm_colbert_waxal/run-20260221-052711/metrics.json`
+  - `artifacts/lfm_colbert_waxal/run-20260221-052711/issues_findings.md`
+- [x] Ran trilingual zero-shot iteration experiment and saved artifacts:
+  - `artifacts/lfm_colbert_fr_en_wo/run-20260221-054839/metrics.json`
+  - `artifacts/lfm_colbert_fr_en_wo/run-20260221-054839/issues_findings.md`
+- [x] Added visual/report outputs:
+  - `artifacts/reports/lfm_colbert_summary.html`
+  - `notebooks/lfm_colbert_test_results.ipynb`
+- [x] Patched Unsloth-facing notebook for external free-GPU execution:
+  - `notebooks/nb/💧_LFM2_ColBERT_350M_Inference.ipynb`
+  - Includes WAXAL + code-switch + trilingual eval blocks and optional quick fine-tune cell
+
+**Key Results:**
+- WAXAL (`run-20260221-052711`):
+  - `plain` zero-shot: `MRR@10 0.6388`, `Recall@10 0.6875`, `nDCG@10 0.6505`
+  - `codeswitch` zero-shot: `MRR@10 0.4631`, `Recall@10 0.5375`, `nDCG@10 0.4804`
+  - Post-finetune delta:
+    - `plain`: `dMRR -0.0544`, `dRecall -0.0125`, `dnDCG -0.0451`
+    - `codeswitch`: `dMRR +0.0100`, `dRecall 0.0000`, `dnDCG +0.0077`
+- Trilingual (`run-20260221-054839`):
+  - `english` MRR@10: `0.2298`
+  - `french` MRR@10: `0.1939`
+  - `wolof` MRR@10: `0.9900`
+  - `fr_en_wo_mix` MRR@10: `0.9800`
+
+**Pending:**
+- [ ] Replace synthetic code-switch generation with real production user-code-switch query logs
+- [ ] Add cross-lingual hard-negative mining for EN/FR -> WO retrieval
+- [ ] Run full Unsloth GPU training loop in hosted notebook environment and compare against local quick-run baselines
+
+**Blockers:**
+- Local Python 3.13 runtime incompatibility for `pylate` dependency chain; Python 3.12 workaround required.
+- Local Unsloth route still requires CUDA-wheel profile alignment; full run intended for hosted free-GPU notebook.

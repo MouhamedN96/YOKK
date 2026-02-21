@@ -91,3 +91,38 @@ fn run_sidecar(dataset: &ZeroShotDataset) {
 - Fine-tuning pipeline
 - Model serving/hosting strategy
 - Production index update scheduling
+
+## Experiment Automation (Added)
+
+The repository now includes runnable experiment scripts for baseline/follow-up tracks:
+
+- `scripts/run_lfm_colbert_waxal.py`
+  - WAXAL (`google/WaxalNLP`, `ful_asr`) evaluation flow
+  - Supports `plain` and synthetic `codeswitch` query styles
+  - Supports optional quick local fine-tune and post-finetune regression checks
+- `scripts/run_lfm_colbert_fr_en_wo_iterations.py`
+  - Trilingual retrieval iteration checks (`english`, `french`, `wolof`, `fr_en_wo_mix`)
+- `scripts/build_trilingual_synthetic_corpus.py`
+  - Builds reusable training/eval corpus from HF trilingual source + synthetic mixed queries
+
+## Latest Recorded Runs
+
+- WAXAL run:
+  - `artifacts/lfm_colbert_waxal/run-20260221-052711/metrics.json`
+- Trilingual iteration run:
+  - `artifacts/lfm_colbert_fr_en_wo/run-20260221-054839/metrics.json`
+- Trilingual corpus build:
+  - `data/corpus/fr_en_wo_v1/manifest.json`
+
+## Notebook Handoff
+
+For hosted free-GPU execution (Unsloth notebook flow), use:
+
+- `notebooks/nb/💧_LFM2_ColBERT_350M_Inference.ipynb`
+
+This notebook now contains:
+
+1. WAXAL zero-shot (`plain` + `codeswitch`)
+2. Optional quick fine-tune cell
+3. FR/EN/WO trilingual zero-shot iteration cells
+4. JSON result export

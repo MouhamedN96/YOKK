@@ -1,0 +1,25 @@
+{
+  "created_utc": "2026-02-21T05:52:53Z",
+  "dataset": {
+    "id": "bilalfaye/english-wolof-french-translation",
+    "split": "train"
+  },
+  "params": {
+    "max_rows": 2000,
+    "min_chars": 12,
+    "seed": 42
+  },
+  "counts": {
+    "scanned_rows": 2558,
+    "kept_rows": 2000,
+    "documents": 2000,
+    "queries": 8000,
+    "pairs": 8000,
+    "synthetic_queries": 2000
+  },
+  "files": {
+    "documents_jsonl": "Yaatal-Engine\\data\\corpus\\fr_en_wo_v1\\documents.jsonl",
+    "queries_jsonl": "Yaatal-Engine\\data\\corpus\\fr_en_wo_v1\\queries.jsonl",
+    "pairs_parquet": "Yaatal-Engine\\data\\corpus\\fr_en_wo_v1\\pairs.parquet"
+  }
+}

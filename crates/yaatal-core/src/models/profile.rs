@@ -21,6 +21,71 @@ pub struct Model {
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    #[sea_orm(has_many = "super::post::Entity")]
+    Posts,
+    #[sea_orm(has_many = "super::comments::Entity")]
+    Comments,
+    #[sea_orm(has_many = "super::upvotes::Entity")]
+    Upvotes,
+    #[sea_orm(has_many = "super::launches::Entity")]
+    Launches,
+    #[sea_orm(has_many = "super::achievements::Entity")]
+    Achievements,
+    #[sea_orm(has_many = "super::bo_conversations::Entity")]
+    BoConversations,
+    #[sea_orm(has_many = "super::bookmarks::Entity")]
+    Bookmarks,
+    #[sea_orm(has_many = "super::user_security_keys::Entity")]
+    UserSecurityKeys,
+}
+
+impl Related<super::post::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Posts.def()
+    }
+}
+
+impl Related<super::comments::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Comments.def()
+    }
+}
+
+impl Related<super::upvotes::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Upvotes.def()
+    }
+}
+
+impl Related<super::launches::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Launches.def()
+    }
+}
+
+impl Related<super::achievements::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Achievements.def()
+    }
+}
+
+impl Related<super::bo_conversations::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::BoConversations.def()
+    }
+}
+
+impl Related<super::bookmarks::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Bookmarks.def()
+    }
+}
+
+impl Related<super::user_security_keys::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::UserSecurityKeys.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}

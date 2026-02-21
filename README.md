@@ -90,6 +90,7 @@ Agent usage examples:
 - `docs/dev-workflow-status.md`
 - `docs/unsloth-on-device-deployment.md`
 - `docs/colbert-zero-shot.md`
+- `docs/architect-e2-closeout-brief.md`
 
 ### Dev Notes (Windows)
 

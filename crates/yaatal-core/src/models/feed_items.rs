@@ -17,6 +17,7 @@ pub struct Model {
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+// feed_items has no foreign keys in 001_initial.sql.
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}

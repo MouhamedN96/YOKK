@@ -176,3 +176,35 @@
 **Blockers:**
 - Local Python 3.13 runtime incompatibility for `pylate` dependency chain; Python 3.12 workaround required.
 - Local Unsloth route still requires CUDA-wheel profile alignment; full run intended for hosted free-GPU notebook.
+
+## Day 9 - 2026-02-21 (E2 Closeout Assignment Package)
+**Goal:** Prepare a ready-to-assign E2 closeout package with exact implementation scope and acceptance gates
+**Status:** DONE
+**Completed:**
+- [x] Added `docs/architect-e2-closeout-brief.md`
+- [x] Documented exact E2 gaps from current codebase:
+  - [x] SeaORM relations missing in FK-backed models (`enum Relation {}` placeholders)
+  - [x] Missing integration coverage for migration/FK/uniqueness/relation queries
+- [x] Captured definition-of-done and verification gates for E2 closure
+- [x] Captured full-project post-E2 queue (E3-E8) for next architect pickup
+**Pending:**
+- [ ] Implement E2 closeout code per `docs/architect-e2-closeout-brief.md`
+
+## Day 10 - 2026-02-21 (E2 Execution: Relations + Integration Tests)
+**Goal:** Execute E2 closeout brief by wiring SeaORM relations and adding integration tests
+**Status:** DONE
+**Completed:**
+- [x] Implemented FK-backed SeaORM relations across model entities:
+  - [x] `profile`, `post`, `comments`, `upvotes`, `launches`, `achievements`, `bo_conversations`, `bookmarks`, `user_security_keys`
+- [x] Kept `feed_items` relation intentionally empty with explicit no-FK note
+- [x] Added integration tests in `crates/yaatal-core/tests/e2_schema_relations.rs`:
+  - [x] migration smoke test (all expected tables)
+  - [x] FK enforcement test (`posts.author_id`)
+  - [x] uniqueness tests (`upvotes`, `bookmarks`)
+  - [x] relation/join query tests (`profile -> posts`, `post -> comments`, `comments` self-parent join)
+- [x] Verification gates:
+  - [x] `cargo fmt --all --check`
+  - [x] `cargo clippy --workspace --all-targets -- -D warnings`
+  - [x] `cargo test --workspace`
+**Pending:**
+- [ ] Start E3 (AI cascade router hardening)

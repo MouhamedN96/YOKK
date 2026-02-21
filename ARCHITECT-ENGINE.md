@@ -67,7 +67,7 @@ App-specific code goes in `apps/` ONLY.
 | Phase | Issue | Status | Branch |
 |-------|-------|--------|--------|
 | E1 | Scaffold workspace | DONE | e1-scaffold-workspace |
-| E2 | Database schema + models | IN PROGRESS | e2-schema-models |
+| E2 | Database schema + models | DONE | e2-schema-models |
 | E3 | AI cascade router | NOT STARTED | e3-ai-router |
 | E4 | JWT auth controller | NOT STARTED | e4-jwt-auth |
 | E5 | Posts CRUD + feed | NOT STARTED | e5-posts-feed |
@@ -273,6 +273,49 @@ App-specific code goes in `apps/` ONLY.
 **Blockers:**
 - Local Python 3.13 + `pylate` compatibility constraints required Python 3.12 runtime for experiments.
 - Local Unsloth run path needs CUDA-enabled torch wheel profile; local checks defaulted to CPU torch in this environment.
+
+### Session 011 - 2026-02-21 (E2 Assignable Closeout Brief + Scope Queue)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Added execution-ready E2 handoff brief:
+  - `docs/architect-e2-closeout-brief.md`
+- Captured exact E2 closure scope:
+  - SeaORM relation wiring targets by model file
+  - Required integration tests (migrations, FK enforcement, uniqueness, relation queries)
+  - Definition-of-done and verification gates
+- Captured full-project continuation queue (E3-E8) and parallel retrieval track context.
+**What's next:**
+- Execute `docs/architect-e2-closeout-brief.md` to complete E2 in code, then move to E3.
+**Blockers:**
+- None
+
+### Session 012 - 2026-02-21 (E2 Relations + Integration Tests Completed)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Implemented SeaORM relations for all FK-backed models:
+  - `crates/yaatal-core/src/models/profile.rs`
+  - `crates/yaatal-core/src/models/post.rs`
+  - `crates/yaatal-core/src/models/comments.rs`
+  - `crates/yaatal-core/src/models/upvotes.rs`
+  - `crates/yaatal-core/src/models/launches.rs`
+  - `crates/yaatal-core/src/models/achievements.rs`
+  - `crates/yaatal-core/src/models/bo_conversations.rs`
+  - `crates/yaatal-core/src/models/bookmarks.rs`
+  - `crates/yaatal-core/src/models/user_security_keys.rs`
+  - `crates/yaatal-core/src/models/feed_items.rs` (explicit note retained: no FK)
+- Added integration coverage for E2 schema behaviors:
+  - `crates/yaatal-core/tests/e2_schema_relations.rs`
+  - Covers migration table existence, FK enforcement, uniqueness constraints, and relation/join query paths.
+- Verification:
+  - `cargo fmt --all --check`: PASS
+  - `cargo clippy --workspace --all-targets -- -D warnings`: PASS
+  - `cargo test --workspace`: PASS
+- Added doc discoverability link:
+  - `README.md` now references `docs/architect-e2-closeout-brief.md`
+**What's next:**
+- Start E3 (AI cascade router hardening): define offline/2G gating and shared rate-limit behavior, then add deterministic fallback tests.
+**Blockers:**
+- None
 ---
 
 ## END SESSION PROTOCOL

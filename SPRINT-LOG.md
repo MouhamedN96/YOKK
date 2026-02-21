@@ -208,3 +208,29 @@
   - [x] `cargo test --workspace`
 **Pending:**
 - [ ] Start E3 (AI cascade router hardening)
+
+## Day 11 — 2026-02-21 (E3 AI Cascade Router Hardening)
+**Goal:** Harden AI cascade router: offline/2G gating, rate limiting, sensitivity routing, latency tracking
+**Status:** DONE
+**Completed:**
+- [x] Added `ai/network.rs`: `NetworkCondition` enum, injectable `NetworkGate` trait
+- [x] Added `ai/rate_limit.rs`: Token-bucket `RateLimiterPool` (pure `std`)
+- [x] Rewrote `ai/router.rs`: data-driven `TierConfig`, 5 tiers (T1-T5), offline/2G gating, sensitivity-aware routing, real latency, `Result` constructor
+- [x] Added 10 deterministic tests in `tests/e3_ai_router.rs`
+- [x] All 40 tests pass, clippy clean
+
+## Day 12 — 2026-02-21 (E4 JWT Auth / Loco SaaS Scaffold)
+**Goal:** Replace yaatal-api placeholder with full Loco SaaS scaffold for JWT authentication
+**Status:** DONE
+**Completed:**
+- [x] Researched Loco framework: starters, JWT middleware, testing, asset serving
+- [x] Installed Loco CLI v0.16.3
+- [x] Scaffolded SaaS app via `loco new` (SQLite, Async workers, no assets)
+- [x] Integrated into workspace (removed standalone `[workspace]`, wired deps)
+- [x] Fixed `include_dir!` paths with `$CARGO_MANIFEST_DIR` prefix
+- [x] Configured JWT: env-var secret, 72h expiry, Bearer + Cookie fallback
+- [x] Auth endpoints: register, login, verify, forgot/reset, magic link, current user
+- [x] Verification: `cargo check --workspace` PASS, `cargo clippy -p yaatal-api` PASS, `cargo test -p yaatal-core` 40/40 PASS
+**Pending:**
+- [ ] E5: Posts CRUD + feed (Loco scaffold generators)
+- [ ] Link users ↔ profiles migration (add `user_id` FK)

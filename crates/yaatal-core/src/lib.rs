@@ -15,6 +15,8 @@ pub mod gamification;
 pub mod models;
 pub mod sanitize;
 
+pub use ai::network::{NetworkCondition, NetworkGate};
+pub use ai::rate_limit::RateLimiterPool;
 pub use ai::router::AiRouter;
 pub use db::{connect, connect_from_config_file, load_config_from_file, run_migrations_from_file};
 pub use design::tokens;

@@ -1,3 +1,9 @@
-//! Yaatal API — Loco HTTP backend
-//! Will be scaffolded with `loco new` and integrated into workspace.
-pub use yaatal_core;
+pub mod app;
+pub mod controllers;
+pub mod data;
+pub mod initializers;
+pub mod mailers;
+pub mod models;
+pub mod tasks;
+pub mod views;
+pub mod workers;

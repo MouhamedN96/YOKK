@@ -68,9 +68,9 @@ App-specific code goes in `apps/` ONLY.
 |-------|-------|--------|--------|
 | E1 | Scaffold workspace | DONE | e1-scaffold-workspace |
 | E2 | Database schema + models | DONE | e2-schema-models |
-| E3 | AI cascade router | NOT STARTED | e3-ai-router |
-| E4 | JWT auth controller | NOT STARTED | e4-jwt-auth |
-| E5 | Posts CRUD + feed | NOT STARTED | e5-posts-feed |
+| E3 | AI cascade router | DONE | e3-ai-router |
+| E4 | JWT auth controller (Loco) | DONE | e4-jwt-auth |
+| E5 | Posts CRUD + feed | IN PROGRESS | e5-posts-feed |
 | E6 | Voice crate | NOT STARTED | e6-voice-crate |
 | E7 | Kill gate (Dioxus+cpal) | NOT STARTED | e7-kill-gate |
 | E8 | Wire YOKK PWA | NOT STARTED | e8-wire-pwa |
@@ -79,9 +79,11 @@ App-specific code goes in `apps/` ONLY.
 
 ## RISKS / NOTES (Active)
 
-- yaatal-api is a placeholder; Loco scaffold must exist before E4 can compile.
-- Config loader now exists in yaatal-core; decide whether yaatal-api should reuse it or use its own Loco config.
-- AI router offline/2G gating and shared rate limiting are not yet defined.
+- ~~yaatal-api is a placeholder~~ → RESOLVED: Loco SaaS scaffold in place (Session 014)
+- ~~AI router offline/2G gating and shared rate limiting are not yet defined~~ → RESOLVED: E3 complete (Session 013)
+- Config: yaatal-api uses Loco's own config (`config/development.yaml`); yaatal-core retains its own config loader. Both coexist — Loco manages server/auth/DB, yaatal-core manages AI keys.
+- Loco users table vs yaatal-core profiles: dual-table strategy decided. Loco owns `users` (auth), yaatal-core owns `profiles` (domain). Link via `user_id → users.id` migration needed (E5 scope).
+- Production DB: Loco uses `sqlx-sqlite` for dev. Turso production adapter is E8 scope.
 
 ---
 
@@ -316,6 +318,82 @@ App-specific code goes in `apps/` ONLY.
 - Start E3 (AI cascade router hardening): define offline/2G gating and shared rate-limit behavior, then add deterministic fallback tests.
 **Blockers:**
 - None
+
+### Session 013 - 2026-02-21 (E3 AI Cascade Router Hardening)
+**Architect:** Claude (Anthropic)
+**What happened:**
+- Added `network.rs`: `NetworkCondition` enum (`Offline`, `TwoG`, `ThreeG`, `FourGPlus`) with `Ord` comparison, `NetworkGate` trait (injectable for testing), `DefaultNetworkGate` (always `FourGPlus`)
+- Added `rate_limit.rs`: Token-bucket `RateLimiter` + `RateLimiterPool` (per-provider, pure `std`, no external deps)
+- Rewrote `router.rs` — data-driven architecture:
+  - `TierConfig` struct + `DEFAULT_TIERS` const array replaces hardcoded match arms
+  - 5 tiers: T1 on-device placeholder, T2 SiliconFlow/LFM2, T3 SiliconFlow/Qwen, T4 OpenRouter/Claude (NEW), T5 HuggingFace/Mistral
+  - Offline/2G gating: tiers skipped when `network < tier.min_network`
+  - Sensitivity routing: sensitive queries skip `sensitive_capable == false` tiers
+  - Rate limiting: `RateLimiterPool` check before each HTTP call
+  - Real latency: `Instant::now()` measurement replaces hardcoded `0`
+  - Constructor returns `Result` instead of `expect()`
+  - `AiRouter::with_options()` for test injection of `NetworkGate`
+- Updated `mod.rs`: exports `network` + `rate_limit` modules
+- Updated `lib.rs`: re-exports `NetworkCondition`, `NetworkGate`, `RateLimiterPool`
+- Added `tests/e3_ai_router.rs` — 10 deterministic integration tests (zero network calls):
+  - `route_offline_returns_tier1_only`, `route_2g_returns_tier1_only`
+  - `route_sensitive_skips_non_capable_tiers`, `route_non_sensitive_uses_tier1`
+  - `route_all_tiers_exhausted_when_no_keys`, `route_latency_is_populated`
+  - `constructor_returns_result`, `classify_default_is_chat`
+  - `network_condition_ordering`, `rate_limiter_pool_basics`
+- Verification:
+  - `cargo fmt --all --check`: PASS
+  - `cargo clippy -p yaatal-core --all-targets -- -D warnings`: PASS (0 warnings)
+  - `cargo test -p yaatal-core`: PASS (all existing + 10 new E3 tests)
+**What's next:**
+- E4 (JWT auth controller): scaffold Loco in `yaatal-api`, add JWT middleware
+**Blockers:**
+- None
+
+### Session 014 — 2026-02-21 (E4 JWT Auth / Loco SaaS Scaffold)
+**Architect:** Antigravity (Google DeepMind)
+**What happened:**
+- Researched Loco framework documentation: starters, JWT auth middleware, testing patterns, asset serving options
+- Installed Loco CLI v0.16.3 (`cargo install loco`)
+- User ran `loco new` interactively (SaaS starter, SQLite, Async workers, no asset serving) → scaffolded into `crates/yaatal-api`
+- Integrated Loco into workspace:
+  - Removed standalone `[workspace]` from generated `Cargo.toml`
+  - Added `version.workspace = true`, `edition.workspace = true`, `license.workspace = true`
+  - Added `yaatal-core` as dependency
+  - Added `loco-rs = { version = "0.16" }` to workspace root deps
+- Fixed `include_dir!` paths with `$CARGO_MANIFEST_DIR` prefix (required for workspace builds)
+- Configured JWT auth in `config/development.yaml`:
+  - Env-var secret (`JWT_SECRET` with dev default)
+  - 72h expiry (African latency aware)
+  - Bearer + Cookie (`yaatal_token`) fallback chain
+- Auth endpoints out of the box: register, login, verify, forgot/reset password, magic link, current user, resend verification
+- Full Loco module structure: `app.rs`, `controllers/auth.rs`, `models/users.rs`, `views/auth.rs`, `mailers/auth.rs`, `workers/downloader.rs`, `tasks/`, `fixtures/users.yaml`
+- Verification:
+  - `cargo check --workspace`: PASS
+  - `cargo clippy -p yaatal-api --all-targets`: PASS (clean)
+  - `cargo test -p yaatal-core`: PASS (40/40 — no regressions)
+**What's next:**
+- E5 (Posts CRUD + feed): use Loco scaffold generators (`cargo loco generate scaffold`) for post/comment CRUD, wire gamification XP hooks
+- Link users ↔ profiles migration (add `user_id` FK to profiles table)
+**Blockers:**
+- None
+
+### Session 015 — 2026-02-21 (E5 Feed Pipeline Genericization)
+**Architect:** Antigravity (Google DeepMind)
+**What happened:**
+- Extracted and integrated `yaatal-feed` (based on X-algorithm) into workspace
+- Genericized core pipeline to be app-agnostic (removed YOKK-specific types)
+- Renamed `VoicePostCandidate` to `FeedCandidate`
+- Renamed `YokkFeedQuery` to `FeedQuery`
+- Introduced extensible `ContentType` (Voice, Text, ProductListing, CourseModule) to support Social Commerce (NJOOBA, DAARA)
+- Extracted hardcoded weights into configurable `WeightConfig` for multi-app setups
+- Refactored filters and scorers to use new generic types
+- Documented remaining compilation errors for handoff
+**What's next:**
+- Fix remaining compile errors (`post_id` -> `id` mismatches, trait constraint issues in `builder.rs`, `MAX_POST_AGE_HOURS` config)
+- Add Loco scaffolds for Post/Comment CRUD operations
+**Blockers:**
+- Residual field/trait mismatches in the newly genericized `yaatal-feed` crate (needs manual fixing before it compiles cleanly)
 ---
 
 ## END SESSION PROTOCOL

@@ -1,0 +1,22 @@
+[package]
+name = "yaatal-feed"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Generic Feed Pipeline"
+
+[dependencies]
+yaatal-core = { path = "../yaatal-core" }
+
+tokio = { workspace = true }
+futures = "0.3"
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+
+chrono = { version = "0.4", features = ["serde"] }
+async-trait = "0.1"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }

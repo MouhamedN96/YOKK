@@ -21,7 +21,7 @@ impl Filter<FeedQuery, FeedCandidate> for SeenPostsFilter {
 
         let (kept, removed) = candidates
             .into_iter()
-            .partition(|c| !seen.contains(c.post_id.as_str()));
+            .partition(|c| !seen.contains(c.id.as_str()));
         Ok(FilterResult { kept, removed })
     }
 

@@ -234,3 +234,21 @@
 **Pending:**
 - [ ] E5: Posts CRUD + feed (Loco scaffold generators)
 - [ ] Link users ↔ profiles migration (add `user_id` FK)
+
+## Day 13 — 2026-02-22 (E5 Feed Compile Unblock + Staged Verification)
+**Goal:** Unblock `yaatal-feed` after genericization drift and re-run staged engine checks
+**Status:** DONE
+**Completed:**
+- [x] Fixed stale candidate identifier usage (`post_id` -> `id`) in feed filters
+- [x] Added missing `TopKSelector::new(k)` constructor
+- [x] Reworked age filtering to use `WeightConfig.max_post_age_hours` instead of removed constant
+- [x] Verified feed crate:
+  - [x] `cargo test -p yaatal-feed --offline` (3 tests pass)
+- [x] Re-ran staged offline checks:
+  - [x] `cargo test -p yaatal-core --offline` pass
+  - [x] `cargo test -p yaatal-search --offline` pass
+**Pending:**
+- [ ] Full workspace gates in toolchain-ready shell (`cl.exe` + real `cp` executable)
+- [ ] Continue E5 API integration (Post/Comment CRUD + users↔profiles link)
+**Blockers:**
+- `libsql-ffi` build script requires external `cp` binary in PATH; PowerShell alias is insufficient in current shell.

@@ -17,7 +17,7 @@ impl Filter<FeedQuery, FeedCandidate> for DedupFilter {
         let mut removed = Vec::new();
 
         for c in candidates {
-            if seen.insert(c.post_id.clone()) {
+            if seen.insert(c.id.clone()) {
                 kept.push(c);
             } else {
                 removed.push(c);

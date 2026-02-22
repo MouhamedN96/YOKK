@@ -47,7 +47,7 @@ impl FeedBuilder {
         // Pre-scoring filters (run sequentially — order matters)
         let filters: Vec<Box<dyn Filter<FeedQuery, FeedCandidate>>> = vec![
             Box::new(DedupFilter),
-            Box::new(AgeFilter),
+            Box::new(AgeFilter::new(config.max_post_age_hours)),
             Box::new(SelfPostFilter),
             Box::new(SeenPostsFilter),
             Box::new(BlockedAuthorsFilter),

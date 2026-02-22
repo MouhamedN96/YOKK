@@ -7,6 +7,12 @@ pub struct TopKSelector {
     pub k: usize,
 }
 
+impl TopKSelector {
+    pub fn new(k: usize) -> Self {
+        Self { k }
+    }
+}
+
 impl Default for TopKSelector {
     fn default() -> Self {
         Self {

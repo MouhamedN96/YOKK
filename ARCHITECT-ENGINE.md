@@ -394,6 +394,29 @@ App-specific code goes in `apps/` ONLY.
 - Add Loco scaffolds for Post/Comment CRUD operations
 **Blockers:**
 - Residual field/trait mismatches in the newly genericized `yaatal-feed` crate (needs manual fixing before it compiles cleanly)
+
+### Session 016 — 2026-02-22 (E5 Feed Compile Unblock + Offline Verification)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Resolved `yaatal-feed` compile blockers introduced during E5 genericization:
+  - Replaced stale `post_id` field usage with canonical `id` in filters:
+    - `crates/yaatal-feed/src/filters/dedup_filter.rs`
+    - `crates/yaatal-feed/src/filters/seen_posts_filter.rs`
+  - Added missing selector constructor:
+    - `crates/yaatal-feed/src/selectors/mod.rs` (`TopKSelector::new`)
+  - Removed stale constant dependency and made age filtering config-driven:
+    - `crates/yaatal-feed/src/filters/age_filter.rs`
+    - `crates/yaatal-feed/src/builder.rs` (passes `config.max_post_age_hours`)
+- Verification (local, offline):
+  - `cargo test -p yaatal-feed --offline`: PASS (3 tests)
+  - `cargo test -p yaatal-core --offline`: PASS
+  - `cargo test -p yaatal-search --offline`: PASS
+  - `cargo check --workspace --offline`: blocked at `libsql-ffi` build script (`cp` program not found in current shell)
+**What's next:**
+- Continue E5 by wiring Post/Comment CRUD scaffolds in `yaatal-api` and linking users↔profiles (`user_id` FK migration path).
+- Run full workspace gates from a shell with real GNU `cp` and native C toolchain (`cl.exe`) available.
+**Blockers:**
+- Environment/toolchain blocker for workspace-level checks in this shell: `libsql-ffi` requires external `cp` binary (PowerShell alias is insufficient).
 ---
 
 ## END SESSION PROTOCOL

@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
+    /// Links to Loco `users.pid` (UUID). Nullable for backward compat.
+    #[sea_orm(unique)]
+    pub user_id: Option<String>,
     pub username: Option<String>,
     pub display_name: Option<String>,
     pub bio: Option<String>,

@@ -440,6 +440,29 @@ App-specific code goes in `apps/` ONLY.
 **Blockers:**
 - No code blocker in auth scope after template fix.
 - Environment remains sensitive to offline Cargo cache integrity and crates.io connectivity in restricted shells.
+
+### Session 018 — 2026-02-22 (E5 Post/Comment CRUD + Users↔Profiles Link)
+**Architect:** Antigravity (DeepMind)
+**What happened:**
+- Created 3 Loco SeaORM migrations:
+  - `m20260222_000001_add_user_id_to_profiles`: adds `user_id` UUID column + unique index to `profiles`
+  - `m20260222_000002_create_posts`: creates `posts` table matching `001_initial.sql` with FKs and indexes
+  - `m20260222_000003_create_comments`: creates `comments` table with FKs to posts, profiles, and self-referential parent
+- Added `user_id: Option<String>` field to `crates/yaatal-core/src/models/profile.rs`
+- Created `crates/yaatal-api/src/services/xp_service.rs`: wraps `yaatal_core::gamification::xp` for DB-persisted XP awards
+- Created `crates/yaatal-api/src/controllers/posts.rs`: full CRUD (create/list/show/update/delete) with JWT auth, author-only guards, pagination, XP integration (+25 PostArticle)
+- Created `crates/yaatal-api/src/controllers/comments.rs`: CRUD (create/list/delete) nested under posts, JWT auth, XP integration (+10 Comment)
+- Created view structs: `views/posts.rs`, `views/comments.rs`
+- Wired modules in `lib.rs`, `controllers/mod.rs`, `views/mod.rs`
+- Registered routes in `app.rs`
+- Verification:
+  - `cargo check -p yaatal-api`: PASS
+  - `cargo check --workspace`: PASS
+**What's next:**
+- Run `cargo clippy --workspace` and `cargo test -p yaatal-api` for full verification
+- Proceed with E6 (Voice Crate Wiring) or E7 (Kill Gate)
+**Blockers:**
+- None — workspace compiles cleanly
 ---
 
 ## END SESSION PROTOCOL

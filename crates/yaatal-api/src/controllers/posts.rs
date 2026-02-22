@@ -55,7 +55,7 @@ fn to_response(m: &post::Model) -> PostResponse {
         comment_count: m.comment_count,
         is_pinned: m.is_pinned != 0,
         created_at: m.created_at.clone(),
-        updated_at: m.updated_at.clone(),
+        updated_at: Some(m.updated_at.clone()),
     }
 }
 
@@ -84,7 +84,7 @@ async fn create_post(
         comment_count: Set(0),
         is_pinned: Set(0),
         created_at: Set(now.clone()),
-        updated_at: Set(Some(now)),
+        updated_at: Set(now),
     };
 
     let inserted = post::Entity::insert(model).exec(&ctx.db).await?;
@@ -168,7 +168,7 @@ async fn update_post(
     if let Some(tags) = params.tags {
         active.tags = Set(Some(tags));
     }
-    active.updated_at = Set(Some(chrono::Utc::now().to_rfc3339()));
+    active.updated_at = Set(chrono::Utc::now().to_rfc3339());
 
     let updated = post::Entity::update(active).exec(&ctx.db).await?;
     format::json(to_response(&updated))

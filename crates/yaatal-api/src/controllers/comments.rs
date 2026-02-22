@@ -4,7 +4,7 @@
 
 use axum::extract::Path;
 use loco_rs::prelude::*;
-use sea_orm::{ActiveValue::Set, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder};
+use sea_orm::{ActiveValue::Set, ColumnTrait, EntityTrait, QueryFilter, QueryOrder};
 use serde::Deserialize;
 use uuid::Uuid;
 

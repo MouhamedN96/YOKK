@@ -252,3 +252,25 @@
 - [ ] Continue E5 API integration (Post/Comment CRUD + users↔profiles link)
 **Blockers:**
 - `libsql-ffi` build script requires external `cp` binary in PATH; PowerShell alias is insufficient in current shell.
+
+## Day 14 — 2026-02-22 (E5 API Auth Test Recovery + Branch Organization)
+**Goal:** Recover failing API auth tests and create clean handoff branches for E5
+**Status:** DONE
+**Completed:**
+- [x] Created/maintained split organization branches:
+  - [x] `organized/e5-feed`
+  - [x] `organized/e5-api-auth`
+- [x] Root-caused auth 500s in request tests to missing Loco mailer template extension variants (`*.t`)
+- [x] Added template compatibility files:
+  - [x] `crates/yaatal-api/src/mailers/auth/welcome/{subject.t,html.t,text.t}`
+  - [x] `crates/yaatal-api/src/mailers/auth/forgot/{subject.t,html.t,text.t}`
+  - [x] `crates/yaatal-api/src/mailers/auth/magic_link/{subject.t,html.t,text.t}`
+- [x] Committed auth fix on `organized/e5-api-auth`:
+  - [x] `e22b5e4 api/auth: add .t mail templates for loco mailer compatibility`
+- [x] Verification:
+  - [x] `cargo test -p yaatal-api --tests --offline` passes (`23 passed, 0 failed`)
+**Pending:**
+- [ ] Merge/cherry-pick `e22b5e4` into primary E5 branch (`e5-posts-feed`) before continuing CRUD/profile-link work.
+- [ ] Execute full workspace gates in non-restricted environment with stable crates.io access.
+**Blockers:**
+- Shell/network restrictions can force fragile offline cache workarounds; prefer normal dev shell for end-to-end gates.

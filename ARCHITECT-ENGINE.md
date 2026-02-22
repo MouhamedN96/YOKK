@@ -417,6 +417,29 @@ App-specific code goes in `apps/` ONLY.
 - Run full workspace gates from a shell with real GNU `cp` and native C toolchain (`cl.exe`) available.
 **Blockers:**
 - Environment/toolchain blocker for workspace-level checks in this shell: `libsql-ffi` requires external `cp` binary (PowerShell alias is insufficient).
+
+### Session 017 — 2026-02-22 (E5 API Auth Stabilization + Handoff Branching)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Organized continuation branches for scoped E5 work:
+  - `organized/e5-feed` (feed-only testable slice)
+  - `organized/e5-api-auth` (Loco auth slice)
+- Diagnosed auth request-test failures (HTTP 500 during register path) to missing Loco template extension variants.
+- Added `.t` template files expected by Loco mailer lookup:
+  - `crates/yaatal-api/src/mailers/auth/welcome/{subject.t,html.t,text.t}`
+  - `crates/yaatal-api/src/mailers/auth/forgot/{subject.t,html.t,text.t}`
+  - `crates/yaatal-api/src/mailers/auth/magic_link/{subject.t,html.t,text.t}`
+- Committed fix on `organized/e5-api-auth`:
+  - `e22b5e4 api/auth: add .t mail templates for loco mailer compatibility`
+- Verification (stage/auth scope):
+  - `cargo test -p yaatal-api --tests --offline`: PASS (`23 passed, 0 failed`)
+**What's next:**
+- Cherry-pick `e22b5e4` into primary E5 integration branch (`e5-posts-feed`) or merge `organized/e5-api-auth`.
+- Continue E5 API scope: scaffold Post/Comment CRUD and add `profiles.user_id -> users.id` migration + relation wiring.
+- Re-run workspace gates once online registry/toolchain environment is stable (`check`, `clippy`, `test`).
+**Blockers:**
+- No code blocker in auth scope after template fix.
+- Environment remains sensitive to offline Cargo cache integrity and crates.io connectivity in restricted shells.
 ---
 
 ## END SESSION PROTOCOL

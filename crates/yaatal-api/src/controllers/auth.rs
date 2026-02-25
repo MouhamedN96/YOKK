@@ -8,8 +8,10 @@ use crate::{
 };
 use loco_rs::prelude::*;
 use regex::Regex;
+use sea_orm::{ActiveValue::Set, EntityTrait};
 use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
+use yaatal_core::models::profile;
 
 pub static EMAIL_DOMAIN_RE: OnceLock<Regex> = OnceLock::new();
 
@@ -47,6 +49,7 @@ async fn register(
     State(ctx): State<AppContext>,
     Json(params): Json<RegisterParams>,
 ) -> Result<Response> {
+    let now = chrono::Utc::now().to_rfc3339();
     let res = users::Model::create_with_password(&ctx.db, &params).await;
 
     let user = match res {
@@ -60,6 +63,25 @@ async fn register(
             return format::json(());
         }
     };
+
+    let profile_id = uuid::Uuid::new_v4().to_string();
+    let profile_model = profile::ActiveModel {
+        id: Set(profile_id),
+        user_id: Set(Some(user.pid.to_string())),
+        username: Set(None),
+        display_name: Set(Some(params.name.clone())),
+        bio: Set(None),
+        avatar_url: Set(None),
+        xp: Set(0),
+        level: Set(1),
+        streak_days: Set(0),
+        last_active_at: Set(None),
+        interests: Set(None),
+        onboarding_complete: Set(0),
+        created_at: Set(now.clone()),
+        updated_at: Set(now),
+    };
+    profile::Entity::insert(profile_model).exec(&ctx.db).await?;
 
     let user = user
         .into_active_model()

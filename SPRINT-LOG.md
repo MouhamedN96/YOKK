@@ -274,3 +274,38 @@
 - [ ] Execute full workspace gates in non-restricted environment with stable crates.io access.
 **Blockers:**
 - Shell/network restrictions can force fragile offline cache workarounds; prefer normal dev shell for end-to-end gates.
+
+## Day 15 — 2026-02-24 (E5 Identity Mapping Fix + Blocked Verification Handoff)
+**Goal:** Fix user/profile identity mismatch in post/comment/xp paths and hand off with documented blocker
+**Status:** IN PROGRESS
+**Completed:**
+- [x] Root-caused mismatch: auth identity (`users.pid`) was used where domain identity (`profiles.id`) is required.
+- [x] Added linked profile creation on register in `yaatal-api` auth controller.
+- [x] Added profile resolver service and wired write paths to resolve `profile_id` from `user_pid`.
+- [x] Updated XP service to award by `user_pid` through `profiles.user_id` lookup.
+- [x] Added migration bootstrap for `profiles` table in Loco migration chain.
+- [x] Added request tests for profile-link creation, author-id mapping, xp updates, and missing-profile failure.
+- [x] Reverted unrelated formatting-only churn and kept only scoped fix files.
+- [x] Added handoff document: `docs/session-handoff-2026-02-24.md`.
+**Pending:**
+- [ ] Run `cargo fmt --all --check`.
+- [ ] Run `cargo check --workspace`.
+- [ ] Run `cargo clippy --workspace --all-targets -- -D warnings`.
+- [ ] Run `cargo test -p yaatal-api --tests`.
+**Blockers:**
+- `libsql-ffi` build-script requirement: external `cp` executable not available to cargo subprocesses in this shell.
+- `cl.exe` is not available in PATH in this shell.
+- `cargo fmt --all --check` is currently blocked by pre-existing trailing whitespace in `crates/yaatal-api/tests/requests/auth.rs`.
+
+## Day 16 — 2026-02-25 (Project Review & Documentation)
+**Goal:** Review codebase and summarize the state of E1-E5.
+**Status:** DONE
+**Completed:**
+- [x] Verified recent E5 fixes for user-profile identity matching.
+- [x] Generated a complete project summary documenting the completed phases.
+- [x] Updated ARCHITECT-ENGINE.md with Session 020 recap.
+**Pending:**
+- [ ] Push E5 identity fixes to GitHub PR #14.
+- [ ] Transition to E6 Voice Crate hardening once tests are green in a non-restricted shell.
+**Blockers:**
+- Continued absence of `cl.exe` and `cp` preventing cargo build scripts from compiling `libsql-ffi`, as well as intermittent loss of connectivity to crates.io.

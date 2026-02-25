@@ -463,6 +463,56 @@ App-specific code goes in `apps/` ONLY.
 - Proceed with E6 (Voice Crate Wiring) or E7 (Kill Gate)
 **Blockers:**
 - None — workspace compiles cleanly
+
+### Session 019 — 2026-02-24 (E5 Identity Mapping Fix + Handoff Blocker)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Root-caused E5 identity mismatch:
+  - JWT claim `users.pid` was being written directly into `posts.author_id` / `comments.author_id`.
+  - Domain schema expects author FKs to `profiles.id`.
+  - XP service also assumed incoming id was `profiles.id`.
+- Implemented fix in `yaatal-api`:
+  - Added linked profile creation during auth register (`profiles.user_id = users.pid`):
+    - `crates/yaatal-api/src/controllers/auth.rs`
+  - Added profile identity resolver service:
+    - `crates/yaatal-api/src/services/profile_identity.rs`
+    - exported in `crates/yaatal-api/src/services/mod.rs`
+  - Updated posts/comments controllers to resolve `profile_id` from `user_pid` for write paths and author guards:
+    - `crates/yaatal-api/src/controllers/posts.rs`
+    - `crates/yaatal-api/src/controllers/comments.rs`
+  - Updated XP service to award by `user_pid` via linked profile lookup:
+    - `crates/yaatal-api/src/services/xp_service.rs`
+  - Added request coverage:
+    - `crates/yaatal-api/tests/requests/identity_mapping.rs`
+    - wired in `crates/yaatal-api/tests/requests/mod.rs`
+  - Added migration bootstrap for profiles table in Loco migration chain:
+    - `crates/yaatal-api/migration/src/m20260222_000000_create_profiles.rs`
+    - `crates/yaatal-api/migration/src/lib.rs`
+- Reverted unintended formatting-only churn in unrelated files and preserved only scoped E5 fix files.
+- Added handoff note:
+  - `docs/session-handoff-2026-02-24.md`
+**What's next:**
+- Run full verification gates from a shell that has both `cp.exe` and `cl.exe` in PATH.
+- If `fmt --check` still fails, remove pre-existing trailing whitespace in `crates/yaatal-api/tests/requests/auth.rs`.
+- Commit and continue E5 integration after verification.
+**Blockers:**
+- Environment blocker in this shell:
+  - `cargo test -p yaatal-api --tests --offline` fails at `libsql-ffi` build script (`cp` program not found for cargo subprocess).
+  - `cl.exe` not present in PATH.
+- `cargo fmt --all --check` also blocked by pre-existing trailing whitespace in `crates/yaatal-api/tests/requests/auth.rs`.
+### Session 020 — 2026-02-25 (Project Review and Documentation)
+**Architect:** Antigravity (DeepMind)
+**What happened:**
+- Reviewed project state across E1-E5 phases.
+- Verified that E5 identity mapping fixes from Session 019 were applied correctly (resolves `users.pid` to `profiles.id`).
+- Generated a comprehensive project summary documenting current architecture, database layers, and Gamification parameters.
+- Attempted to run `cargo check --workspace` but verified it remains blocked by the offline/network environment (failing on crates.io and `libsql-ffi` build script missing GNU tools).
+**What's next:**
+- Execute CI checks in an environment with full internet access and the MSVC C++ build tools (`cl.exe`) + GNU `cp`.
+- Push the E5 identity fixes to the active PR (#14).
+- Move on to E6 (Voice Crate).
+**Blockers:**
+- Codebase checks blocked by `unable to get packages from source` (network issue) and missing build tools in current Windows shell.
 ---
 
 ## END SESSION PROTOCOL

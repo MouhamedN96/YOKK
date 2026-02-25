@@ -9,8 +9,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::{
-    models::_entities::users,
-    services::xp_service,
+    services::{profile_identity, xp_service},
     views::posts::{PostListResponse, PostResponse},
 };
 use yaatal_core::gamification::xp::XpAction;
@@ -66,7 +65,8 @@ async fn create_post(
     State(ctx): State<AppContext>,
     Json(params): Json<CreatePostParams>,
 ) -> Result<Response> {
-    let _user = users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
+    let profile_id =
+        profile_identity::resolve_profile_id_for_user_pid(&ctx.db, &auth.claims.pid).await?;
 
     let id = Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
@@ -74,7 +74,7 @@ async fn create_post(
 
     let model = post::ActiveModel {
         id: Set(id.clone()),
-        author_id: Set(auth.claims.pid.clone()),
+        author_id: Set(profile_id),
         title: Set(params.title),
         content: Set(params.content),
         r#type: Set(parse_post_type(post_type)),
@@ -94,7 +94,8 @@ async fn create_post(
         .ok_or_else(|| Error::NotFound)?;
 
     // Best-effort XP award — don't fail the request if XP update fails
-    let _ = xp_service::award_xp(&ctx.db, &auth.claims.pid, XpAction::PostArticle).await;
+    let _ =
+        xp_service::award_xp_by_user_pid(&ctx.db, &auth.claims.pid, XpAction::PostArticle).await;
 
     format::json(to_response(&created))
 }
@@ -125,10 +126,7 @@ async fn list_posts(
 
 /// GET /api/posts/:id — get a single post.
 #[debug_handler]
-async fn show_post(
-    State(ctx): State<AppContext>,
-    Path(id): Path<String>,
-) -> Result<Response> {
+async fn show_post(State(ctx): State<AppContext>, Path(id): Path<String>) -> Result<Response> {
     let post = post::Entity::find_by_id(&id)
         .one(&ctx.db)
         .await?
@@ -145,13 +143,15 @@ async fn update_post(
     Path(id): Path<String>,
     Json(params): Json<UpdatePostParams>,
 ) -> Result<Response> {
+    let profile_id =
+        profile_identity::resolve_profile_id_for_user_pid(&ctx.db, &auth.claims.pid).await?;
     let existing = post::Entity::find_by_id(&id)
         .one(&ctx.db)
         .await?
         .ok_or_else(|| Error::NotFound)?;
 
     // Only the author can update their own post
-    if existing.author_id != auth.claims.pid {
+    if existing.author_id != profile_id {
         return Err(Error::Unauthorized("not the post author".into()));
     }
 
@@ -181,12 +181,14 @@ async fn remove_post(
     State(ctx): State<AppContext>,
     Path(id): Path<String>,
 ) -> Result<Response> {
+    let profile_id =
+        profile_identity::resolve_profile_id_for_user_pid(&ctx.db, &auth.claims.pid).await?;
     let existing = post::Entity::find_by_id(&id)
         .one(&ctx.db)
         .await?
         .ok_or_else(|| Error::NotFound)?;
 
-    if existing.author_id != auth.claims.pid {
+    if existing.author_id != profile_id {
         return Err(Error::Unauthorized("not the post author".into()));
     }
 

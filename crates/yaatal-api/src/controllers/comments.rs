@@ -9,8 +9,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::{
-    models::_entities::users,
-    services::xp_service,
+    services::{profile_identity, xp_service},
     views::comments::{CommentListResponse, CommentResponse},
 };
 use yaatal_core::gamification::xp::XpAction;
@@ -46,7 +45,8 @@ async fn create_comment(
     Path(post_id): Path<String>,
     Json(params): Json<CreateCommentParams>,
 ) -> Result<Response> {
-    let _user = users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
+    let profile_id =
+        profile_identity::resolve_profile_id_for_user_pid(&ctx.db, &auth.claims.pid).await?;
 
     let id = Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
@@ -54,7 +54,7 @@ async fn create_comment(
     let model = comments::ActiveModel {
         id: Set(id.clone()),
         post_id: Set(post_id),
-        author_id: Set(auth.claims.pid.clone()),
+        author_id: Set(profile_id),
         parent_id: Set(params.parent_id),
         content: Set(params.content),
         is_accepted: Set(0),
@@ -70,7 +70,7 @@ async fn create_comment(
         .ok_or_else(|| Error::NotFound)?;
 
     // Best-effort XP award
-    let _ = xp_service::award_xp(&ctx.db, &auth.claims.pid, XpAction::Comment).await;
+    let _ = xp_service::award_xp_by_user_pid(&ctx.db, &auth.claims.pid, XpAction::Comment).await;
 
     format::json(to_response(&created))
 }
@@ -101,12 +101,14 @@ async fn remove_comment(
     State(ctx): State<AppContext>,
     Path((_post_id, id)): Path<(String, String)>,
 ) -> Result<Response> {
+    let profile_id =
+        profile_identity::resolve_profile_id_for_user_pid(&ctx.db, &auth.claims.pid).await?;
     let existing = comments::Entity::find_by_id(&id)
         .one(&ctx.db)
         .await?
         .ok_or_else(|| Error::NotFound)?;
 
-    if existing.author_id != auth.claims.pid {
+    if existing.author_id != profile_id {
         return Err(Error::Unauthorized("not the comment author".into()));
     }
 

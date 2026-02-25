@@ -5,25 +5,23 @@
 use loco_rs::prelude::*;
 use sea_orm::{ActiveValue::Set, EntityTrait};
 use yaatal_core::gamification::xp::XpAction;
-// Re-use the yaatal-core profile model for DB operations
 use yaatal_core::models::profile;
 
-/// Award XP for the given action, incrementing the profile's `xp` column.
+use crate::services::profile_identity;
+
+/// Award XP for the given action, incrementing the linked profile's `xp` column.
 ///
 /// Returns the new XP total.
 ///
 /// # Errors
 ///
-/// Returns `loco_rs::Error` if the profile is not found or the DB update fails.
-pub async fn award_xp(
+/// Returns `loco_rs::Error` if the linked profile is not found or the DB update fails.
+pub async fn award_xp_by_user_pid(
     db: &sea_orm::DatabaseConnection,
-    profile_id: &str,
+    user_pid: &str,
     action: XpAction,
 ) -> Result<i32> {
-    let profile = profile::Entity::find_by_id(profile_id)
-        .one(db)
-        .await?
-        .ok_or_else(|| Error::NotFound)?;
+    let profile = profile_identity::resolve_profile_for_user_pid(db, user_pid).await?;
 
     let points = action.points() as i32;
     let new_xp = profile.xp + points;

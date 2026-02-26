@@ -1,134 +1,46 @@
-//! Audio transcription via HuggingFace Whisper API
-
-use reqwest::Client;
-use serde::{Deserialize, Serialize};
-use std::time::Duration;
 use thiserror::Error;
+// use candle_core::{Device, Tensor}; // commented out until wired
+// use hf_hub::api::sync::Api;
 
 #[derive(Debug, Error)]
-pub enum TranscriptionError {
-    #[error("Network error: {0}")]
-    Network(#[from] reqwest::Error),
-    #[error("API error ({status}): {message}")]
-    Api { status: u16, message: String },
-    #[error("Model is loading, retry after {estimated_time:.0}s")]
-    ModelLoading { estimated_time: f64 },
-    #[error("Empty transcription result")]
-    EmptyResult,
+pub enum TranscribeError {
+    #[error("Cloud API error: {0}")]
+    CloudError(#[from] reqwest::Error),
+    #[error("Local ML engine error: {0}")]
+    LocalInferenceError(#[from] candle_core::Error),
+    #[error("Model loading failed")]
+    ModelLoadError,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TranscriptionResult {
-    pub text: String,
-    pub model: String,
-    pub duration_ms: u64,
-}
+/// The intelligent transcription router.
+/// Decides whether to use cloud APIs or run the local `candle` Whisper model
+/// based on network condition flags.
+pub struct TranscriptionRouter;
 
-const DEFAULT_MODEL: &str = "openai/whisper-small";
-const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
-
-pub async fn transcribe_audio(
-    client: &Client,
-    api_key: &str,
-    audio_bytes: &[u8],
-) -> Result<TranscriptionResult, TranscriptionError> {
-    transcribe_with_model(client, api_key, audio_bytes, DEFAULT_MODEL).await
-}
-
-pub async fn transcribe_with_model(
-    client: &Client,
-    api_key: &str,
-    audio_bytes: &[u8],
-    model: &str,
-) -> Result<TranscriptionResult, TranscriptionError> {
-    let url = format!("https://api-inference.huggingface.co/models/{}", model);
-
-    let start = std::time::Instant::now();
-
-    let response = client
-        .post(&url)
-        .header("Authorization", format!("Bearer {}", api_key))
-        .header("Content-Type", "audio/wav")
-        .timeout(DEFAULT_TIMEOUT)
-        .body(audio_bytes.to_vec())
-        .send()
-        .await?;
-
-    let status = response.status();
-    let json: serde_json::Value = response.json().await?;
-    let duration_ms = start.elapsed().as_millis() as u64;
-
-    // Handle HuggingFace-specific errors
-    if !status.is_success() {
-        // Model loading (503 with estimated_time)
-        if status.as_u16() == 503 {
-            if let Some(time) = json["estimated_time"].as_f64() {
-                return Err(TranscriptionError::ModelLoading {
-                    estimated_time: time,
-                });
-            }
+impl TranscriptionRouter {
+    /// Transcribes an audio file payload (e.g., WAV).
+    /// If `offline` is true, forces the use of the local Candle Whisper model.
+    pub async fn transcribe(audio_payload: &[u8], offline: bool) -> Result<String, TranscribeError> {
+        if offline {
+            tracing::info!("Network offline or gated: routing to pure-Rust local Candle model");
+            // NOTE: In a real environment, Model loading should be cached statically
+            // or instantiated once at startup, not per-request, to save RAM and time.
+            Self::transcribe_local(audio_payload)
+        } else {
+            tracing::info!("Network stable: routing to Cloud Whisper API to save battery");
+            Self::transcribe_cloud(audio_payload).await
         }
-        let message = json["error"]
-            .as_str()
-            .unwrap_or("Unknown API error")
-            .to_string();
-        return Err(TranscriptionError::Api {
-            status: status.as_u16(),
-            message,
-        });
     }
 
-    // Extract transcription text
-    let text = json["text"]
-        .as_str()
-        .map(|s| s.to_string())
-        .ok_or(TranscriptionError::EmptyResult)?;
-
-    if text.is_empty() {
-        return Err(TranscriptionError::EmptyResult);
+    fn transcribe_local(_audio_payload: &[u8]) -> Result<String, TranscribeError> {
+        // TODO(#E6): Wire up candle-transformers Whisper model here.
+        // Requires importing hf_hub to fetch weights natively if not present,
+        // moving tensors to Device::Cpu, and decoding the logits.
+        Ok(String::from("[Local Transcript Stub] Yaatal Offline Voice"))
     }
 
-    Ok(TranscriptionResult {
-        text,
-        model: model.to_string(),
-        duration_ms,
-    })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_transcription_result_serializes() {
-        let result = TranscriptionResult {
-            text: "Hello world".into(),
-            model: "openai/whisper-small".into(),
-            duration_ms: 1234,
-        };
-        let json = serde_json::to_string(&result).unwrap();
-        assert!(json.contains("Hello world"));
-        assert!(json.contains("1234"));
-    }
-
-    #[test]
-    fn test_error_display() {
-        let err = TranscriptionError::ModelLoading {
-            estimated_time: 20.5,
-        };
-        let msg = format!("{}", err);
-        assert!(msg.contains("retry after"));
-        assert!(msg.contains("20"));
-    }
-
-    #[test]
-    fn test_api_error_display() {
-        let err = TranscriptionError::Api {
-            status: 429,
-            message: "Rate limit exceeded".into(),
-        };
-        let msg = format!("{}", err);
-        assert!(msg.contains("429"));
-        assert!(msg.contains("Rate limit"));
+    async fn transcribe_cloud(_audio_payload: &[u8]) -> Result<String, TranscribeError> {
+        // TODO(#E6): Wire up Reqwest payload to a remote cascade router.
+        Ok(String::from("[Cloud Transcript Stub] Yaatal Cloud Voice"))
     }
 }

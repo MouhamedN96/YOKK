@@ -126,3 +126,21 @@ This notebook now contains:
 2. Optional quick fine-tune cell
 3. FR/EN/WO trilingual zero-shot iteration cells
 4. JSON result export
+
+## Reproducible Packaging (KitOps)
+
+To package the latest zero-shot outputs for sharing and replay:
+
+```powershell
+pwsh -File .\scripts\pack_zeroshot_kitops.ps1
+```
+
+This creates a bundle in `artifacts/kitops/` with:
+
+- `modelkit.yaml` (KitOps spec)
+- `bundle_manifest.json` (checksums + source pointers)
+- latest run metrics/findings, baseline dataset, notebooks, and reports
+
+Reference:
+
+- `docs/kitops-zeroshot-packaging.md`

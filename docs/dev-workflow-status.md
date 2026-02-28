@@ -1,43 +1,50 @@
 # Dev Workflow Status
 
-Date: 2026-02-19
+Date: 2026-02-27
 
 ## Summary
 
-- Local skills validators are passing.
-- Formatting is clean across the workspace.
-- Rust workspace gates pass (`check`, `clippy`, `test`) when using Windows-safe local environment settings.
+- Workspace test setup baseline is implemented with shared local scripts and CI parity.
+- `yaatal-search` crate tests run successfully through the new script entrypoint.
+- Full workspace gates are still blocked in this shell by native toolchain/environment issues and pre-existing formatting drift.
 
-## Commands Run
+## Current Standard Commands
+
+| Command | Purpose |
+|---|---|
+| `pwsh -File .\scripts\run-rust-gates.ps1 -Mode fmt` | Formatting gate |
+| `pwsh -File .\scripts\run-rust-gates.ps1 -Mode check` | Compile gate |
+| `pwsh -File .\scripts\run-rust-gates.ps1 -Mode clippy` | Lint gate |
+| `pwsh -File .\scripts\run-rust-gates.ps1 -Mode test` | Workspace test gate |
+| `pwsh -File .\scripts\run-rust-gates.ps1 -Mode all` | Full gate sequence |
+| `pwsh -File .\scripts\run-rust-tests.ps1 -Scope yaatal-search` | Crate-scoped test run |
+
+## Verification Snapshot (Latest Session)
 
 | Command | Status | Notes |
 |---|---|---|
-| `powershell -ExecutionPolicy Bypass -File .\scripts\validate-skills-manifest.ps1` | PASS | Manifest paths valid |
-| `powershell -ExecutionPolicy Bypass -File .\scripts\validate-skill-docs.ps1` | PASS | Required frontmatter and sections present |
-| `cargo fmt --all` | PASS | Applied formatting updates |
-| `cargo fmt --all --check` | PASS | No formatting diffs remaining |
-| `cargo check --workspace` | PASS | Verified under VS dev shell + temp dirs |
-| `cargo clippy --workspace --all-targets -- -D warnings` | PASS | Fixed constant-assertion lint in `design/tokens.rs` |
-| `cargo test --workspace` | PASS | 37 tests passed (`29 core + 8 voice`) |
+| `pwsh -File .\scripts\run-rust-tests.ps1 -Scope yaatal-search` | PASS | `3 passed, 0 failed` |
+| `pwsh -File .\scripts\run-rust-gates.ps1 -Mode fmt` | FAIL | Pre-existing formatting/trailing-whitespace drift in repo |
+| `pwsh -File .\scripts\run-rust-gates.ps1 -Mode check` | BLOCKED | Native build/toolchain issue in current shell (`libsql-sqlite3-parser`) |
 
 ## Windows Caveats
 
-Observed issues during setup:
-
-1. OneDrive-backed repo paths can break cargo build outputs (`output path is not a writable directory`).
-2. `libsql-ffi` build script calls `cp`, which is not always present on Windows PATH.
+1. OneDrive-backed repo paths can break cargo build outputs.
+2. Native dependency builds are sensitive to:
+   - `cl.exe` availability and shell/toolchain setup
+   - `cp.exe` availability for certain build scripts
+3. Parallel cargo invocations against the same target directory increase lock/permission risk.
 
 ## Recommended Local Setup (Windows)
 
-On Windows, ensure native build tools are available in PATH:
-
-1. Visual Studio Build Tools with C++ workload (MSVC + Windows SDK)
-2. A `cp` command in PATH (e.g. from Git for Windows), or an equivalent local shim for dev runs
-3. Build/cache directories outside OneDrive for reliable writes
+Use the shared setup script before running gates:
 
 ```powershell
-New-Item -ItemType Directory -Force -Path "$env:TEMP\yaatal-cargo-home" | Out-Null
-New-Item -ItemType Directory -Force -Path "$env:TEMP\yaatal-target" | Out-Null
-$env:CARGO_HOME = "$env:TEMP\yaatal-cargo-home"
-$env:CARGO_TARGET_DIR = "$env:TEMP\yaatal-target"
+pwsh -File .\scripts\setup-rust-test-env.ps1
 ```
+
+Expected prerequisites:
+
+1. Visual Studio Build Tools with C++ workload (`cl.exe` in PATH)
+2. Git for Windows utilities (`cp.exe` in PATH)
+3. Workspace gates run from a single shell/session (avoid concurrent runs on same target dir)

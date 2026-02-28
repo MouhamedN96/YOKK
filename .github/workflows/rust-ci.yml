@@ -8,6 +8,7 @@ on:
       - "crates/**"
       - "apps/**"
       - "migrations/**"
+      - "scripts/**"
       - ".github/workflows/rust-ci.yml"
   push:
     paths:
@@ -16,6 +17,7 @@ on:
       - "crates/**"
       - "apps/**"
       - "migrations/**"
+      - "scripts/**"
       - ".github/workflows/rust-ci.yml"
   workflow_dispatch:
 
@@ -32,7 +34,7 @@ jobs:
           components: rustfmt
 
       - name: Check formatting
-        run: cargo fmt --all --check
+        run: pwsh -File ./scripts/run-rust-gates.ps1 -Mode fmt
 
   check:
     runs-on: ubuntu-latest
@@ -44,7 +46,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cargo check
-        run: cargo check --workspace
+        run: pwsh -File ./scripts/run-rust-gates.ps1 -Mode check
 
   clippy:
     runs-on: ubuntu-latest
@@ -58,7 +60,7 @@ jobs:
           components: clippy
 
       - name: Cargo clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: pwsh -File ./scripts/run-rust-gates.ps1 -Mode clippy
 
   test:
     runs-on: ubuntu-latest
@@ -70,4 +72,20 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cargo test
-        run: cargo test --workspace
+        run: pwsh -File ./scripts/run-rust-gates.ps1 -Mode test
+
+  windows-stability:
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Run Rust gates (Windows stabilization)
+        shell: pwsh
+        run: .\scripts\run-rust-gates.ps1 -Mode all

@@ -51,6 +51,27 @@ cp .env.example .env
 # Fill in your API keys
 ```
 
+## Rust Test Workflow
+
+Run all Rust gates (format, check, clippy, test):
+
+```powershell
+pwsh -File .\scripts\run-rust-gates.ps1 -Mode all
+```
+
+Run one gate:
+
+```powershell
+pwsh -File .\scripts\run-rust-gates.ps1 -Mode test
+```
+
+Run crate-scoped tests:
+
+```powershell
+pwsh -File .\scripts\run-rust-tests.ps1 -Scope yaatal-api
+pwsh -File .\scripts\run-rust-tests.ps1 -Scope yaatal-core
+```
+
 ## Configuration
 
 Config files are in `config/`:
@@ -90,6 +111,7 @@ Agent usage examples:
 - `docs/dev-workflow-status.md`
 - `docs/unsloth-on-device-deployment.md`
 - `docs/colbert-zero-shot.md`
+- `docs/kitops-zeroshot-packaging.md`
 - `docs/architect-e2-closeout-brief.md`
 
 ### Dev Notes (Windows)
@@ -106,6 +128,11 @@ cargo check --workspace
 
 Also ensure a `cp` command is available in PATH for `libsql-ffi` build scripts
 (Git for Windows typically provides this).
+
+The test scripts automatically move cargo cache/target paths to `%TEMP%` and
+set serialized build jobs for stability on Windows.
+
+See full baseline status: `docs/testing-baseline.md`.
 
 ## License
 

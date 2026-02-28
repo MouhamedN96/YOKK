@@ -6,8 +6,8 @@ This script:
 1) Streams a small ASR subset from google/WaxalNLP.
 2) Builds a retrieval benchmark dataset (query -> relevant doc IDs).
 3) Runs zero-shot retrieval evaluation.
-4) Fine-tunes the ColBERT model with contrastive training.
-5) Runs post-fine-tune evaluation and writes all metrics/artifacts.
+4) Optionally fine-tunes the ColBERT model with contrastive training.
+5) Writes metrics/artifacts for zero-shot-only or fine-tune flows.
 """
 
 from __future__ import annotations
@@ -56,25 +56,47 @@ def _query_from_text(text: str, rng: random.Random) -> str:
     return " ".join(words[start : start + window])
 
 
-CODE_SWITCH_TERMS = [
-    "please",
-    "help",
-    "urgent",
-    "error",
-    "account",
-    "phone",
-    "network",
-    "money",
-    "job",
-    "today",
-    "tomorrow",
-    "fix",
-    "why",
-    "how",
-    "where",
-    "fast",
-    "ok",
+SWITCH_DISCOURSE_MARKERS = [
+    "Abeg",
+    "Jowo",
+    "E joo",
+    "Se o ri",
+    "O da",
 ]
+
+SWITCH_TAGS = [
+    "abi",
+    "sha",
+    "o da",
+]
+
+SWITCH_INTER_SENTENTIAL_CLAUSES = [
+    "mo wa nibi",
+    "ko si wahala",
+    "e joo",
+]
+
+SWITCH_INSERT_TERMS = [
+    "iranlowo",
+    "owo",
+    "iyara",
+    "oro",
+    "dara",
+]
+
+
+def _inject_terms(words: list[str], rng: random.Random, intensity: float) -> list[str]:
+    if not words:
+        return words
+
+    ratio = max(0.05, min(0.8, intensity))
+    replace_count = max(1, int(len(words) * ratio))
+    replace_count = min(replace_count, len(words))
+    replaced = list(words)
+    replace_idx = rng.sample(range(len(replaced)), k=replace_count)
+    for idx in replace_idx:
+        replaced[idx] = rng.choice(SWITCH_INSERT_TERMS)
+    return replaced
 
 
 def _code_switch_query(text: str, rng: random.Random, intensity: float) -> str:
@@ -83,18 +105,17 @@ def _code_switch_query(text: str, rng: random.Random, intensity: float) -> str:
     if not words:
         return base
 
-    ratio = max(0.05, min(0.8, intensity))
-    replace_count = max(1, int(len(words) * ratio))
-    replace_count = min(replace_count, len(words))
-    replace_idx = rng.sample(range(len(words)), k=replace_count)
-    for idx in replace_idx:
-        words[idx] = rng.choice(CODE_SWITCH_TERMS)
-
-    # Keep some original context while injecting code-switched markers.
-    if len(words) >= 4 and rng.random() < 0.5:
-        words.append(rng.choice(["pls", "asap", "now"]))
-
-    return " ".join(words)
+    pattern = rng.choice(["P1", "P2", "P3", "P4", "P5"])
+    if pattern == "P1":
+        return f"{rng.choice(SWITCH_DISCOURSE_MARKERS)}, {base}"
+    if pattern == "P2":
+        return f"{base}, {rng.choice(SWITCH_TAGS)}."
+    if pattern == "P3":
+        return " ".join(_inject_terms(words, rng, intensity))
+    if pattern == "P4":
+        switched = " ".join(_inject_terms(words, rng, intensity))
+        return f"{switched}. {rng.choice(SWITCH_INTER_SENTENTIAL_CLAUSES)}."
+    return f"{rng.choice(SWITCH_INTER_SENTENTIAL_CLAUSES)}. {base}"
 
 
 def _normalize_hits(hits: Any) -> list[dict[str, Any]]:
@@ -336,6 +357,11 @@ def parse_args() -> argparse.Namespace:
         default="artifacts/lfm_colbert_waxal",
         help="Root folder for run artifacts.",
     )
+    parser.add_argument(
+        "--zero-shot-only",
+        action="store_true",
+        help="Skip fine-tuning and only run zero-shot evaluation.",
+    )
     return parser.parse_args()
 
 
@@ -374,7 +400,9 @@ def main() -> int:
 
     # Corpus includes both train and eval docs so eval positives are retrievable.
     corpus = train_rows + eval_rows
-    training_examples = _build_training_examples(train_rows, rng, args.train_pairs)
+    training_examples: list[InputExample] = []
+    if not args.zero_shot_only:
+        training_examples = _build_training_examples(train_rows, rng, args.train_pairs)
     eval_query_sets: dict[str, list[dict[str, Any]]] = {}
     if args.eval_style in ("plain", "both"):
         eval_query_sets["plain"] = _build_eval_queries(
@@ -393,7 +421,7 @@ def main() -> int:
             code_switch_intensity=args.code_switch_intensity,
         )
 
-    if not training_examples:
+    if not args.zero_shot_only and not training_examples:
         raise RuntimeError("No training examples generated.")
     if not eval_query_sets:
         raise RuntimeError("No evaluation queries generated.")
@@ -435,6 +463,7 @@ def main() -> int:
             "seed": args.seed,
             "eval_style": args.eval_style,
             "code_switch_intensity": args.code_switch_intensity,
+            "zero_shot_only": bool(args.zero_shot_only),
         },
     )
 
@@ -473,6 +502,87 @@ def main() -> int:
             f"Recall@{args.top_k}={baseline_metrics.recall_at_k:.4f}, "
             f"nDCG@{args.top_k}={baseline_metrics.ndcg_at_k:.4f}"
         )
+
+    primary_style = "plain" if "plain" in baseline_by_style else next(iter(baseline_by_style))
+    baseline_primary = baseline_by_style[primary_style]
+
+    if args.zero_shot_only:
+        trackio.finish()
+        metrics_payload = {
+            "timestamp_utc": _utc_now(),
+            "dataset": {"id": args.dataset_id, "config": args.config},
+            "model": {"base": args.model_id, "output_dir": None},
+            "settings": {
+                "top_k": args.top_k,
+                "epochs": args.epochs,
+                "max_steps": args.max_steps,
+                "batch_size": args.batch_size,
+                "encode_batch_size": args.encode_batch_size,
+                "learning_rate": args.lr,
+                "seed": args.seed,
+                "eval_style": args.eval_style,
+                "code_switch_intensity": args.code_switch_intensity,
+                "primary_eval_style": primary_style,
+                "zero_shot_only": True,
+            },
+            "dataset_snapshot": dataset_snapshot,
+            "baseline": asdict(baseline_primary),
+            "finetuned": None,
+            "delta": None,
+            "baseline_by_eval_style": {k: asdict(v) for k, v in baseline_by_style.items()},
+            "finetuned_by_eval_style": {},
+            "delta_by_eval_style": {},
+            "runtime_seconds": {
+                "baseline_eval": baseline_runtime_by_style.get(primary_style, 0.0),
+                "train": 0.0,
+                "finetuned_eval": 0.0,
+                "baseline_eval_by_style": baseline_runtime_by_style,
+                "finetuned_eval_by_style": {},
+            },
+            "trackio": {"project": trackio_project, "run_name": trackio_name},
+            "issues": issues,
+            "findings": findings,
+            "trainer_state": None,
+        }
+        metrics_path = run_dir / "metrics.json"
+        metrics_path.write_text(json.dumps(metrics_payload, indent=2), encoding="utf-8")
+
+        report_lines = [
+            "# LFM2-ColBERT Waxal Run Report",
+            "",
+            f"- Run: `{run_dir.name}`",
+            f"- Timestamp (UTC): `{metrics_payload['timestamp_utc']}`",
+            f"- Dataset: `{args.dataset_id}` / `{args.config}`",
+            f"- Model: `{args.model_id}`",
+            "- Mode: `zero-shot-only`",
+            "",
+            "## Findings",
+        ]
+        for finding in findings:
+            report_lines.append(f"- {finding}")
+
+        report_lines.extend(["", "## Issues"])
+        if issues:
+            for issue in issues:
+                report_lines.append(f"- {issue}")
+        else:
+            report_lines.append("- None")
+
+        report_lines.extend(
+            [
+                "",
+                "## Artifacts",
+                f"- Metrics JSON: `{metrics_path}`",
+                f"- Dataset snapshot: `{run_dir / 'dataset_snapshot.json'}`",
+                f"- Index folder: `{run_dir / 'indexes'}`",
+            ]
+        )
+        (run_dir / "issues_findings.md").write_text("\n".join(report_lines) + "\n", encoding="utf-8")
+
+        print(f"[{_utc_now()}] completed")
+        print(f"metrics: {metrics_path}")
+        print(f"report:  {run_dir / 'issues_findings.md'}")
+        return 0
 
     print(f"[{_utc_now()}] fine-tuning model")
     train_loader = DataLoader(training_examples, batch_size=args.batch_size, shuffle=True)
@@ -559,8 +669,6 @@ def main() -> int:
         )
     trackio.finish()
 
-    primary_style = "plain" if "plain" in baseline_by_style else next(iter(baseline_by_style))
-    baseline_primary = baseline_by_style[primary_style]
     finetuned_primary = finetuned_by_style[primary_style]
     delta_primary = delta_by_style[primary_style]
 
@@ -579,6 +687,7 @@ def main() -> int:
             "eval_style": args.eval_style,
             "code_switch_intensity": args.code_switch_intensity,
             "primary_eval_style": primary_style,
+            "zero_shot_only": False,
         },
         "dataset_snapshot": dataset_snapshot,
         "baseline": asdict(baseline_primary),

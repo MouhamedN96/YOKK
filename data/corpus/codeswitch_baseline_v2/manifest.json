@@ -1,0 +1,70 @@
+{
+  "created_utc": "2026-02-27T09:08:08Z",
+  "params": {
+    "seed": 42,
+    "fr_wo_eng_docs": 120,
+    "ful_yo_docs": 40,
+    "min_chars": 20,
+    "waxal_dataset_id": "google/WaxalNLP",
+    "waxal_config": "ful_asr",
+    "waxal_split": "train"
+  },
+  "counts": {
+    "documents": 160,
+    "queries": 320,
+    "pairs": 320,
+    "style_counts": {
+      "plain": 160,
+      "codeswitch": 160
+    },
+    "segment_counts": {
+      "fr_wo_eng_local": 240,
+      "ful_yo_minimal": 80
+    },
+    "pattern_counts": {
+      "none": 160,
+      "P2": 27,
+      "P5": 37,
+      "P1": 25,
+      "P3": 43,
+      "P4": 28
+    }
+  },
+  "schema": {
+    "pair_fields": [
+      "pair_id",
+      "query_id",
+      "query_text",
+      "query_style",
+      "switch_pattern",
+      "matrix_lang",
+      "embedded_langs",
+      "source_segment",
+      "target_doc_id",
+      "doc_id",
+      "doc_text",
+      "doc_lang",
+      "is_synthetic",
+      "source_dataset",
+      "source_split",
+      "quality_notes",
+      "label"
+    ]
+  },
+  "files": {
+    "documents_jsonl": "data\\corpus\\codeswitch_baseline_v2\\documents.jsonl",
+    "queries_jsonl": "data\\corpus\\codeswitch_baseline_v2\\queries.jsonl",
+    "pairs_jsonl": "data\\corpus\\codeswitch_baseline_v2\\pairs.jsonl",
+    "pairs_parquet": "data\\corpus\\codeswitch_baseline_v2\\pairs.parquet"
+  },
+  "notes": {
+    "inspiration": "pattern style inspired by docs/examples.md",
+    "pattern_codes": [
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+track,style,mrr_at_10,recall_at_10,ndcg_at_10,queries
+bargain_scenario,codeswitch,1.0,1.0,1.0,80
+bargain_scenario,plain,1.0,1.0,1.0,80
+fr_wo_eng,english,0.22916666666666669,0.3,0.2462122514206566,40
+fr_wo_eng,fr_en_wo_mix,1.0,1.0,1.0,40
+fr_wo_eng,french,0.21023809523809525,0.3,0.23133319783056697,40
+fr_wo_eng,wolof,1.0,1.0,1.0,40
+waxal,codeswitch,0.5048611111111111,0.65,0.539183338781078,40
+waxal,plain,0.5015277777777778,0.575,0.5187372278635843,40

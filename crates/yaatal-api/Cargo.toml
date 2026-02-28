@@ -9,6 +9,8 @@ description = "Loco-based HTTP backend for Yaatal Engine"
 
 [dependencies]
 yaatal-core = { path = "../yaatal-core" }
+yaatal-feed = { path = "../yaatal-feed" }
+yaatal-voice = { path = "../yaatal-voice" }
 loco-rs = { version = "0.16" }
 serde = { workspace = true }
 serde_json = { workspace = true }

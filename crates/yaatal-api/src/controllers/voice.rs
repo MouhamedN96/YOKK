@@ -1,0 +1,29 @@
+#![allow(clippy::unused_async)]
+use loco_rs::prelude::*;
+use axum::{body::Bytes, extract::State, routing::post};
+use yaatal_voice::transcribe::TranscriptionRouter;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TranscribeResponse {
+    pub transcription: String,
+}
+
+pub async fn transcribe(
+    State(_ctx): State<AppContext>,
+    body: Bytes,
+) -> Result<Response> {
+    // Route the incoming audio bytes through the E6 transcription engine.
+    // passing false defaults to Cloud routing when online, fallback to Candle when offline.
+    let text = TranscriptionRouter::transcribe(&body, false)
+        .await
+        .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+
+    format::json(TranscribeResponse { transcription: text })
+}
+
+pub fn routes() -> Routes {
+    Routes::new()
+        .prefix("/api/voice")
+        .add("/transcribe", post(transcribe))
+}

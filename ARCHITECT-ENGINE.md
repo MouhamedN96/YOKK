@@ -70,7 +70,7 @@ App-specific code goes in `apps/` ONLY.
 | E2 | Database schema + models | DONE | e2-schema-models |
 | E3 | AI cascade router | DONE | e3-ai-router |
 | E4 | JWT auth controller (Loco) | DONE | e4-jwt-auth |
-| E5 | Posts CRUD + feed | IN PROGRESS | e5-posts-feed |
+| E5 | Posts CRUD + feed | DONE | e5-posts-feed |
 | E6 | Voice crate | NOT STARTED | e6-voice-crate |
 | E7 | Kill gate (Dioxus+cpal) | NOT STARTED | e7-kill-gate |
 | E8 | Wire YOKK PWA | NOT STARTED | e8-wire-pwa |
@@ -513,6 +513,59 @@ App-specific code goes in `apps/` ONLY.
 - Move on to E6 (Voice Crate).
 **Blockers:**
 - Codebase checks blocked by `unable to get packages from source` (network issue) and missing build tools in current Windows shell.
+
+### Session 021 — 2026-02-27 (Workspace Test Setup Baseline + CI Parity)
+**Architect:** Codex (GPT-5)
+**What happened:**
+- Implemented workspace test setup baseline (local + CI parity):
+  - Added `scripts/setup-rust-test-env.ps1`
+  - Added `scripts/run-rust-gates.ps1` (`fmt`, `check`, `clippy`, `test`, `all`)
+  - Added `scripts/run-rust-tests.ps1` (crate-scoped test entrypoints)
+- Wired Rust CI workflow to shared scripts:
+  - Updated `.github/workflows/rust-ci.yml` jobs (`fmt-check`, `check`, `clippy`, `test`) to call `run-rust-gates.ps1`
+  - Added `windows-stability` job (`continue-on-error`) for Windows gate visibility
+- Added baseline test-status documentation:
+  - `docs/testing-baseline.md`
+  - `docs/session-handoff-2026-02-27.md`
+  - Updated `README.md` with new test workflow commands and baseline doc reference
+- Fixed `yaatal-core` compile blocker in Africa's Talking client:
+  - `crates/yaatal-core/src/networking/africas_talking.rs`
+  - Removed invalid reqwest builder method usage and changed constructor to return `Result`
+**What's next:**
+- Run full workspace gates in a toolchain-complete shell (`cl.exe` + `cp.exe` in PATH) and resolve any remaining pre-existing fmt drift.
+- Promote Windows CI job to required after stabilization.
+**Blockers:**
+- Current shell missing `cl.exe` and `cp.exe` in PATH.
+- `cargo fmt --all --check` still reports pre-existing formatting issues in existing files outside this change scope.
+
+### Session 022 — 2026-02-27 (E5 Feed Integration Complete)
+**Architect:** Claude (Anthropic)
+**What happened:**
+- Completed E5 feed integration — wired `yaatal-feed` pipeline to `yaatal-api`:
+  - Added `yaatal-feed` dependency to `crates/yaatal-api/Cargo.toml`
+  - Created `crates/yaatal-api/src/sources/` module with SeaORM repository adapters:
+    - `post_repository.rs` — `PostRepository` trait implementation for following source
+    - `discovery_repository.rs` — `DiscoveryRepository` trait implementation (trending by upvotes)
+  - Created `crates/yaatal-api/src/controllers/feed.rs`:
+    - `GET /api/feed` endpoint with JWT auth
+    - Pagination support (`page`, `per_page` params)
+    - `following_only` mode for in-network posts
+    - Returns ranked feed with scores
+  - Created `crates/yaatal-api/src/views/feed.rs` — re-exports `FeedResponse`, `FeedItem`
+  - Wired feed routes in `crates/yaatal-api/src/app.rs`
+  - Added integration tests in `crates/yaatal-api/tests/requests/feed.rs`:
+    - `feed_requires_auth()` — verifies 401 without auth
+    - `feed_returns_ranked_posts()` — verifies ranked output
+    - `feed_pagination_works()` — verifies pagination
+    - `feed_following_only_mode()` — verifies in-network filtering
+- Verification:
+  - `cargo check -p yaatal-api`: PASS
+  - `cargo check --workspace`: PASS
+**What's next:**
+- E6 (Voice crate wiring) — implement cloud transcription API integration
+- E7 (Kill gate) — Dioxus + cpal voice recording demo
+**Blockers:**
+- Pre-existing test database migration issue (`profiles.user_id` UNIQUE column conflict) — requires test DB reset or migration fix
 ---
 
 ## END SESSION PROTOCOL

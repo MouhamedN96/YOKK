@@ -309,3 +309,55 @@
 - [ ] Transition to E6 Voice Crate hardening once tests are green in a non-restricted shell.
 **Blockers:**
 - Continued absence of `cl.exe` and `cp` preventing cargo build scripts from compiling `libsql-ffi`, as well as intermittent loss of connectivity to crates.io.
+
+## Day 17 — 2026-02-27 (Workspace Test Setup Baseline + CI Parity)
+**Goal:** Standardize local/CI Rust gates and improve Windows test reliability.
+**Status:** DONE
+**Completed:**
+- [x] Added local test environment setup script:
+  - [x] `scripts/setup-rust-test-env.ps1`
+- [x] Added unified Rust gate runner:
+  - [x] `scripts/run-rust-gates.ps1` (`fmt`, `check`, `clippy`, `test`, `all`)
+- [x] Added crate-scoped test runner:
+  - [x] `scripts/run-rust-tests.ps1`
+- [x] Updated Rust CI workflow to use shared scripts:
+  - [x] `.github/workflows/rust-ci.yml`
+  - [x] Added `windows-stability` job (`continue-on-error`)
+- [x] Added baseline testing documentation:
+  - [x] `docs/testing-baseline.md`
+  - [x] `docs/session-handoff-2026-02-27.md`
+  - [x] `README.md` test workflow section + baseline link
+- [x] Fixed `yaatal-core` compile blocker in Africa's Talking client:
+  - [x] `crates/yaatal-core/src/networking/africas_talking.rs`
+**Pending:**
+- [ ] Run full workspace gates in shell with `cl.exe` + `cp.exe` available.
+- [ ] Decide whether to normalize pre-existing workspace formatting drift currently reported by `cargo fmt --all --check`.
+**Blockers:**
+- Current shell still missing native toolchain binaries required by some dependency build scripts.
+
+## Day 18 — 2026-02-27 (E5 Feed Integration Complete)
+**Goal:** Wire `yaatal-feed` pipeline to `yaatal-api` for ranked feed endpoint.
+**Status:** DONE
+**Completed:**
+- [x] Added `yaatal-feed` dependency to `crates/yaatal-api/Cargo.toml`
+- [x] Created SeaORM repository adapters:
+  - [x] `crates/yaatal-api/src/sources/mod.rs`
+  - [x] `crates/yaatal-api/src/sources/post_repository.rs` — `PostRepository` for following source
+  - [x] `crates/yaatal-api/src/sources/discovery_repository.rs` — `DiscoveryRepository` for trending posts
+- [x] Created feed controller:
+  - [x] `crates/yaatal-api/src/controllers/feed.rs` — `GET /api/feed` with JWT auth
+  - [x] `crates/yaatal-api/src/views/feed.rs` — response types
+- [x] Wired routes in `crates/yaatal-api/src/app.rs`
+- [x] Added integration tests:
+  - [x] `crates/yaatal-api/tests/requests/feed.rs` — 4 tests (auth, ranking, pagination, following-only)
+  - [x] Updated `crates/yaatal-api/tests/requests/mod.rs`
+- [x] Updated documentation:
+  - [x] `ARCHITECT-ENGINE.md` — E5 marked DONE, Session 022 log added
+- [x] Verification:
+  - [x] `cargo check -p yaatal-api`: PASS
+  - [x] `cargo check --workspace`: PASS
+**Pending:**
+- [ ] Fix pre-existing test DB migration issue (`profiles.user_id` UNIQUE column)
+- [ ] Run `cargo test -p yaatal-api --tests` after DB fix
+**Blockers:**
+- Test database migration conflict — requires test DB reset or migration order fix

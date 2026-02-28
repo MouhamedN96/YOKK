@@ -50,7 +50,10 @@ def _first_existing(candidates: Iterable[Path]) -> Path | None:
 def _detect_artifacts_root(repo_root: Path, override: Path | None) -> Path:
     candidates: list[Path] = []
     if override is not None:
-        candidates.append(override.resolve())
+        override_resolved = override.resolve()
+        if not override_resolved.exists():
+            raise FileNotFoundError(f"Explicit artifacts root does not exist: {override_resolved}")
+        candidates.append(override_resolved)
     candidates.extend(
         [
             (repo_root / "artifacts").resolve(),
@@ -75,7 +78,10 @@ def _detect_artifacts_root(repo_root: Path, override: Path | None) -> Path:
 def _detect_dataset_root(repo_root: Path, override: Path | None) -> Path:
     candidates: list[Path] = []
     if override is not None:
-        candidates.append(override.resolve())
+        override_resolved = override.resolve()
+        if not override_resolved.exists():
+            raise FileNotFoundError(f"Explicit dataset root does not exist: {override_resolved}")
+        candidates.append(override_resolved)
     candidates.extend(
         [
             (repo_root / "data" / "corpus" / "codeswitch_baseline_v2").resolve(),

@@ -38,6 +38,8 @@ jobs:
 
   check:
     runs-on: ubuntu-latest
+    env:
+      LD_LIBRARY_PATH: ""
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,6 +52,8 @@ jobs:
 
   clippy:
     runs-on: ubuntu-latest
+    env:
+      LD_LIBRARY_PATH: ""
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,6 +68,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      LD_LIBRARY_PATH: ""
     steps:
       - name: Checkout
         uses: actions/checkout@v4

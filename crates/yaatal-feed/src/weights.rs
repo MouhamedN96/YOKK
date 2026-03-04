@@ -33,9 +33,9 @@ pub struct WeightConfig {
     // ─── Content Boosts ────────────────────────────────────────────────
     pub voice_post_boost: f64,
     pub voice_min_duration_ms: u32,
-    
-    pub commerce_listing_boost: f64,     // App-specific content boost
-    
+
+    pub commerce_listing_boost: f64, // App-specific content boost
+
     // ─── Diversity ─────────────────────────────────────────────────────
     pub author_diversity_decay: f64,
     pub author_diversity_floor: f64,
@@ -69,8 +69,8 @@ impl WeightConfig {
             profile_click_weight: 2.0,
             follow_weight: 8.0,
 
-            add_to_cart_weight: 0.0,    // unused in YOKK
-            purchase_weight: 0.0,       // unused in YOKK
+            add_to_cart_weight: 0.0, // unused in YOKK
+            purchase_weight: 0.0,    // unused in YOKK
 
             skip_weight: -0.5,
             mute_weight: -74.0,
@@ -81,7 +81,7 @@ impl WeightConfig {
 
             voice_post_boost: 1.5,
             voice_min_duration_ms: 2000,
-            
+
             commerce_listing_boost: 1.0,
 
             author_diversity_decay: 0.5,
@@ -95,7 +95,7 @@ impl WeightConfig {
             default_result_size: 25,
         }
     }
-    
+
     /// Initial weights for NJOOBA (Commerce platform)
     pub fn njooba_defaults() -> Self {
         let mut config = Self::yokk_defaults();

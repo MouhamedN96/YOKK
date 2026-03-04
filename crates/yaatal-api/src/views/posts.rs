@@ -1,5 +1,4 @@
 /// Post API response views.
-
 use serde::{Deserialize, Serialize};
 
 /// Response for a single post.

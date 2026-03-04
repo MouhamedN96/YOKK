@@ -9,6 +9,7 @@
 //   let result = pipeline.execute(query, "req-abc").await;
 //   // result.candidates → ranked Vec<VoicePostCandidate>
 
+pub mod builder;
 pub mod filters;
 pub mod hydrators;
 pub mod pipeline;
@@ -17,8 +18,7 @@ pub mod selectors;
 pub mod sources;
 pub mod types;
 pub mod weights;
-pub mod builder;
 
-pub use types::*;
 pub use builder::FeedBuilder;
 pub use pipeline::executor::FeedPipeline;
+pub use types::*;

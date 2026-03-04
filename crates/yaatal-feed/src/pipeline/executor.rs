@@ -57,14 +57,23 @@ where
         info!(request_id, sourced = stats.sourced, "candidates sourced");
 
         // 3. Hydrate candidates (parallel)
-        let hydrated = self.hydrate_candidates(&hydrated_query, candidates, request_id).await;
+        let hydrated = self
+            .hydrate_candidates(&hydrated_query, candidates, request_id)
+            .await;
         stats.after_hydration = hydrated.len();
 
         // 4. Filter (sequential)
-        let (kept, removed) = self.run_filters(&hydrated_query, hydrated, &self.filters, request_id).await;
+        let (kept, removed) = self
+            .run_filters(&hydrated_query, hydrated, &self.filters, request_id)
+            .await;
         stats.after_filter = kept.len();
         stats.filtered_out = removed.len();
-        info!(request_id, kept = kept.len(), removed = removed.len(), "pre-score filter");
+        info!(
+            request_id,
+            kept = kept.len(),
+            removed = removed.len(),
+            "pre-score filter"
+        );
 
         // 5. Score (sequential — order matters)
         let scored = self.run_scorers(&hydrated_query, kept, request_id).await;
@@ -79,7 +88,12 @@ where
 
         // 7. Post-selection filters
         let (mut final_candidates, _) = self
-            .run_filters(&hydrated_query, selected, &self.post_selection_filters, request_id)
+            .run_filters(
+                &hydrated_query,
+                selected,
+                &self.post_selection_filters,
+                request_id,
+            )
             .await;
         final_candidates.truncate(self.result_size);
         stats.selected = final_candidates.len();
@@ -109,7 +123,11 @@ where
     }
 
     async fn hydrate_query(&self, query: Q, request_id: &str) -> Q {
-        let enabled: Vec<_> = self.query_hydrators.iter().filter(|h| h.enable(&query)).collect();
+        let enabled: Vec<_> = self
+            .query_hydrators
+            .iter()
+            .filter(|h| h.enable(&query))
+            .collect();
         let futures = enabled.iter().map(|h| h.hydrate(&query));
         let results = join_all(futures).await;
 
@@ -117,7 +135,9 @@ where
         for (hydrator, result) in enabled.iter().zip(results) {
             match result {
                 Ok(h) => hydrator.update(&mut hydrated, h),
-                Err(e) => error!(request_id, component = hydrator.name(), error = %e, "query hydrator failed"),
+                Err(e) => {
+                    error!(request_id, component = hydrator.name(), error = %e, "query hydrator failed")
+                }
             }
         }
         hydrated
@@ -132,7 +152,12 @@ where
         for (source, result) in enabled.iter().zip(results) {
             match result {
                 Ok(mut candidates) => {
-                    info!(request_id, source = source.name(), count = candidates.len(), "source fetched");
+                    info!(
+                        request_id,
+                        source = source.name(),
+                        count = candidates.len(),
+                        "source fetched"
+                    );
                     collected.append(&mut candidates);
                 }
                 Err(e) => error!(request_id, source = source.name(), error = %e, "source failed"),
@@ -141,7 +166,12 @@ where
         collected
     }
 
-    async fn hydrate_candidates(&self, query: &Q, mut candidates: Vec<C>, request_id: &str) -> Vec<C> {
+    async fn hydrate_candidates(
+        &self,
+        query: &Q,
+        mut candidates: Vec<C>,
+        request_id: &str,
+    ) -> Vec<C> {
         let enabled: Vec<_> = self.hydrators.iter().filter(|h| h.enable(query)).collect();
         let expected = candidates.len();
         let futures = enabled.iter().map(|h| h.hydrate(query, &candidates));
@@ -162,7 +192,9 @@ where
                         );
                     }
                 }
-                Err(e) => error!(request_id, hydrator = hydrator.name(), error = %e, "hydrator failed"),
+                Err(e) => {
+                    error!(request_id, hydrator = hydrator.name(), error = %e, "hydrator failed")
+                }
             }
         }
         candidates

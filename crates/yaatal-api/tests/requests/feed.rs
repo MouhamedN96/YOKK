@@ -111,9 +111,33 @@ async fn feed_returns_ranked_posts() {
         let profile = linked_profile_by_user_pid(&ctx, &user.pid.to_string()).await;
 
         // Seed posts with varying engagement (to test ranking)
-        let _post1 = seed_post(&ctx, &profile.id, "Low engagement", "Content 1", "discussion", 0).await;
-        let post2 = seed_post(&ctx, &profile.id, "Medium engagement", "Content 2", "discussion", 10).await;
-        let post3 = seed_post(&ctx, &profile.id, "High engagement", "Content 3", "discussion", 50).await;
+        let _post1 = seed_post(
+            &ctx,
+            &profile.id,
+            "Low engagement",
+            "Content 1",
+            "discussion",
+            0,
+        )
+        .await;
+        let post2 = seed_post(
+            &ctx,
+            &profile.id,
+            "Medium engagement",
+            "Content 2",
+            "discussion",
+            10,
+        )
+        .await;
+        let post3 = seed_post(
+            &ctx,
+            &profile.id,
+            "High engagement",
+            "Content 3",
+            "discussion",
+            50,
+        )
+        .await;
 
         // Fetch feed
         let (auth_key, auth_value) = auth_header(&token);
@@ -127,10 +151,7 @@ async fn feed_returns_ranked_posts() {
         let feed: FeedResponse = serde_json::from_str(&response.text()).unwrap();
 
         // Should have posts
-        assert!(
-            !feed.items.is_empty(),
-            "feed should return posts"
-        );
+        assert!(!feed.items.is_empty(), "feed should return posts");
 
         // Verify response structure
         assert_eq!(feed.page, 1);
@@ -168,8 +189,14 @@ async fn feed_returns_ranked_posts() {
 #[serial]
 async fn feed_pagination_works() {
     request::<App, _, _>(|request, ctx| async move {
-        let (user, token) =
-            register_and_login(&request, &ctx, "pagination_tester", "page@test.com", "12341234").await;
+        let (user, token) = register_and_login(
+            &request,
+            &ctx,
+            "pagination_tester",
+            "page@test.com",
+            "12341234",
+        )
+        .await;
         let profile = linked_profile_by_user_pid(&ctx, &user.pid.to_string()).await;
 
         // Seed multiple posts
@@ -217,12 +244,26 @@ async fn feed_pagination_works() {
 #[serial]
 async fn feed_following_only_mode() {
     request::<App, _, _>(|request, ctx| async move {
-        let (user, token) =
-            register_and_login(&request, &ctx, "following_tester", "follow@test.com", "12341234").await;
+        let (user, token) = register_and_login(
+            &request,
+            &ctx,
+            "following_tester",
+            "follow@test.com",
+            "12341234",
+        )
+        .await;
         let profile = linked_profile_by_user_pid(&ctx, &user.pid.to_string()).await;
 
         // Seed a post
-        seed_post(&ctx, &profile.id, "Following test post", "Content", "discussion", 5).await;
+        seed_post(
+            &ctx,
+            &profile.id,
+            "Following test post",
+            "Content",
+            "discussion",
+            5,
+        )
+        .await;
 
         let (auth_key, auth_value) = auth_header(&token);
 

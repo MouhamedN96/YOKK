@@ -54,7 +54,9 @@ impl Scorer<FeedQuery, FeedCandidate> for AuthorDiversityScorer {
         });
 
         for (original_idx, candidate) in ordered {
-            let entry = author_counts.entry(candidate.author_id.clone()).or_insert(0);
+            let entry = author_counts
+                .entry(candidate.author_id.clone())
+                .or_insert(0);
             let position = *entry;
             *entry += 1;
 

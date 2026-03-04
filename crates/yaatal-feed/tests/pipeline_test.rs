@@ -5,11 +5,11 @@
 use async_trait::async_trait;
 use chrono::Utc;
 use std::sync::Arc;
+use yaatal_feed::builder::FeedBuilder;
 use yaatal_feed::pipeline::executor::FeedPipeline;
 use yaatal_feed::sources::discovery_source::DiscoveryRepository;
 use yaatal_feed::sources::following_source::PostRepository;
 use yaatal_feed::types::*;
-use yaatal_feed::builder::FeedBuilder;
 use yaatal_feed::weights::WeightConfig;
 
 // ─── Mock Repositories ─────────────────────────────────────────────
@@ -251,7 +251,11 @@ async fn test_author_diversity() {
         }
     }
 
-    let pipeline = FeedBuilder::build(Arc::new(SameAuthorRepo), Arc::new(EmptyDiscovery), WeightConfig::default());
+    let pipeline = FeedBuilder::build(
+        Arc::new(SameAuthorRepo),
+        Arc::new(EmptyDiscovery),
+        WeightConfig::default(),
+    );
 
     let mut query = FeedQuery::new("user-456", "SN", 10);
     query.following_ids = vec!["prolific-poster".into()];

@@ -23,9 +23,7 @@ impl Filter<FeedQuery, FeedCandidate> for AgeFilter {
         let now = Utc::now();
         let max_age = chrono::Duration::hours(self.max_post_age_hours as i64);
         let (kept, removed) = candidates.into_iter().partition(|c| {
-            c.created_at
-                .map(|t| (now - t) < max_age)
-                .unwrap_or(false) // unknown age = drop
+            c.created_at.map(|t| (now - t) < max_age).unwrap_or(false) // unknown age = drop
         });
         Ok(FilterResult { kept, removed })
     }

@@ -23,7 +23,10 @@ impl Default for TopKSelector {
 
 impl Selector<FeedQuery, FeedCandidate> for TopKSelector {
     fn score(&self, candidate: &FeedCandidate) -> f64 {
-        candidate.final_score.or(candidate.weighted_score).unwrap_or(0.0)
+        candidate
+            .final_score
+            .or(candidate.weighted_score)
+            .unwrap_or(0.0)
     }
 
     fn size(&self) -> Option<usize> {

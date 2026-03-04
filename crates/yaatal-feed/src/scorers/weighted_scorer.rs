@@ -14,7 +14,9 @@ pub struct WeightedScorer {
 
 impl Default for WeightedScorer {
     fn default() -> Self {
-        Self { config: WeightConfig::default() }
+        Self {
+            config: WeightConfig::default(),
+        }
     }
 }
 
@@ -58,13 +60,15 @@ impl WeightedScorer {
     /// Voice posts with sufficient duration get a boost.
     fn voice_boost(&self, candidate: &FeedCandidate) -> f64 {
         match (&candidate.content_type, candidate.voice_duration_ms) {
-            (ContentType::Voice | ContentType::VoiceText, Some(ms)) if ms > self.config.voice_min_duration_ms => {
+            (ContentType::Voice | ContentType::VoiceText, Some(ms))
+                if ms > self.config.voice_min_duration_ms =>
+            {
                 self.config.voice_post_boost
             }
             _ => 1.0,
         }
     }
-    
+
     /// Commerce listings get a boost depending on config.
     fn commerce_boost(&self, candidate: &FeedCandidate) -> f64 {
         match candidate.content_type {
@@ -76,7 +80,8 @@ impl WeightedScorer {
     /// Same offset logic as X — keeps negative scores sortable.
     fn offset(&self, combined: f64) -> f64 {
         if combined < 0.0 {
-            (combined + self.config.negative_weights_sum()) / self.config.positive_weights_sum() * WeightConfig::negative_scores_offset()
+            (combined + self.config.negative_weights_sum()) / self.config.positive_weights_sum()
+                * WeightConfig::negative_scores_offset()
         } else {
             combined + WeightConfig::negative_scores_offset()
         }

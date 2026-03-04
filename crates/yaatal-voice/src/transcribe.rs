@@ -76,10 +76,7 @@ impl TranscriptionRouter {
         }
     }
 
-    fn transcribe_local(
-        _audio_payload: &[u8],
-        _model: &str,
-    ) -> Result<String, TranscriptionError> {
+    fn transcribe_local(_audio_payload: &[u8], _model: &str) -> Result<String, TranscriptionError> {
         tracing::error!("Local candle inference is not supported on this build target");
         // TODO(#E7): Wire candle-whisper for on-device inference
         Err(TranscriptionError::Api {
@@ -104,10 +101,7 @@ impl TranscriptionRouter {
             });
         }
 
-        let url = format!(
-            "https://api-inference.huggingface.co/models/{}",
-            model
-        );
+        let url = format!("https://api-inference.huggingface.co/models/{}", model);
 
         let client = reqwest::Client::builder()
             .timeout(TRANSCRIPTION_TIMEOUT)
@@ -150,11 +144,9 @@ impl TranscriptionRouter {
         }
 
         // Parse the response — HF returns { "text": "..." }
-        let body: serde_json::Value = resp.json().await.map_err(|e| {
-            TranscriptionError::Api {
-                status: 200,
-                message: format!("Failed to parse response: {}", e),
-            }
+        let body: serde_json::Value = resp.json().await.map_err(|e| TranscriptionError::Api {
+            status: 200,
+            message: format!("Failed to parse response: {}", e),
         })?;
 
         let text = body

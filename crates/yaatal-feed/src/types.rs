@@ -13,18 +13,18 @@ use uuid::Uuid;
 pub struct FeedQuery {
     pub user_id: String,
     pub request_id: String,
-    pub language_codes: Vec<String>,      // user's preferred languages
-    pub country_code: String,             // e.g., "SN"
-    pub seen_post_ids: Vec<String>,       // already seen — don't re-serve
-    pub served_post_ids: Vec<String>,     // served this session
-    pub in_network_only: bool,            // false = include discovery
-    pub cursor: Option<String>,           // pagination
-    pub limit: usize,                     // how many to return
+    pub language_codes: Vec<String>,  // user's preferred languages
+    pub country_code: String,         // e.g., "SN"
+    pub seen_post_ids: Vec<String>,   // already seen — don't re-serve
+    pub served_post_ids: Vec<String>, // served this session
+    pub in_network_only: bool,        // false = include discovery
+    pub cursor: Option<String>,       // pagination
+    pub limit: usize,                 // how many to return
 
     // Hydrated by QueryHydrators (start empty, get populated):
-    pub following_ids: Vec<String>,       // who this user follows
-    pub blocked_ids: Vec<String>,         // who this user blocked
-    pub muted_ids: Vec<String>,           // who this user muted
+    pub following_ids: Vec<String>, // who this user follows
+    pub blocked_ids: Vec<String>,   // who this user blocked
+    pub muted_ids: Vec<String>,     // who this user muted
     pub engagement_history: Vec<EngagementEvent>, // recent actions for scoring context
 }
 
@@ -49,21 +49,21 @@ pub struct EngagementEvent {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum EngagementAction {
-    Listen,              // played voice post
-    ListenFull,          // listened to completion
-    Reply,               // replied
-    Share,               // shared item
-    Like,                // liked/hearted
-    Skip,                // scrolled past quickly
-    Mute,                // muted author
-    Block,               // blocked author
-    Report,              // reported item
-    ProfileClick,        // tapped author profile
-    Follow,              // followed author
-    AddToCart,           // For commerce (NJOOBA)
-    Purchase,            // For commerce (NJOOBA)
-    Enroll,              // For learning (DAARA)
-    
+    Listen,       // played voice post
+    ListenFull,   // listened to completion
+    Reply,        // replied
+    Share,        // shared item
+    Like,         // liked/hearted
+    Skip,         // scrolled past quickly
+    Mute,         // muted author
+    Block,        // blocked author
+    Report,       // reported item
+    ProfileClick, // tapped author profile
+    Follow,       // followed author
+    AddToCart,    // For commerce (NJOOBA)
+    Purchase,     // For commerce (NJOOBA)
+    Enroll,       // For learning (DAARA)
+
     // Extensible catch-all
     Other(String),
 }
@@ -113,12 +113,12 @@ pub struct FeedCandidate {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub enum ContentType {
     #[default]
-    Text,            // Standard text post
-    Voice,           // Voice-only (YOKK)
-    VoiceText,       // Voice + Transcription
-    ProductListing,  // NJOOBA (Commerce)
-    CourseModule,    // DAARA (Learning)
-    Repost,          // simple reshare
+    Text, // Standard text post
+    Voice,          // Voice-only (YOKK)
+    VoiceText,      // Voice + Transcription
+    ProductListing, // NJOOBA (Commerce)
+    CourseModule,   // DAARA (Learning)
+    Repost,         // simple reshare
 }
 
 /// Engagement probability predictions
@@ -133,7 +133,7 @@ pub struct EngagementScores {
     pub p_repost: Option<f64>,
     pub p_profile_click: Option<f64>,
     pub p_follow: Option<f64>,
-    
+
     // Commerce specific
     pub p_add_to_cart: Option<f64>,
     pub p_purchase: Option<f64>,

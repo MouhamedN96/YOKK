@@ -10,7 +10,7 @@ use yaatal_feed::sources::discovery_source::DiscoveryRepository as FeedDiscovery
 use yaatal_feed::types::{ContentType, FeedCandidate};
 
 /// SeaORM-backed discovery repository for feed pipeline.
-/// 
+///
 /// Day 1 implementation: returns trending/popular posts.
 /// Future: integrate with yaatal-search ColBERT or Bo AI recommendations.
 pub struct SeaOrmDiscoveryRepository {
@@ -50,10 +50,7 @@ impl FeedDiscoveryRepository for SeaOrmDiscoveryRepository {
             .await
             .map_err(|e| format!("Failed to fetch discovery posts: {}", e))?;
 
-        let candidates = posts
-            .into_iter()
-            .map(|p| model_to_candidate(&p))
-            .collect();
+        let candidates = posts.into_iter().map(|p| model_to_candidate(&p)).collect();
 
         Ok(candidates)
     }

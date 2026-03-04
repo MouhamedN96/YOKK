@@ -140,10 +140,7 @@ impl VoiceRecorder {
     pub fn stop(&mut self) -> Result<Vec<f32>, CaptureError> {
         if let Some(stream) = self.stream.take() {
             stream.pause()?;
-            let mut buf = self
-                .buffer
-                .lock()
-                .map_err(|_| CaptureError::LockPoisoned)?;
+            let mut buf = self.buffer.lock().map_err(|_| CaptureError::LockPoisoned)?;
             let data = std::mem::take(&mut *buf);
             Ok(data)
         } else {

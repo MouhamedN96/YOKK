@@ -45,7 +45,11 @@ impl Source<FeedQuery, FeedCandidate> for FollowingSource {
     async fn get_candidates(&self, query: &FeedQuery) -> Result<Vec<FeedCandidate>, FeedError> {
         let mut posts = self
             .repo
-            .get_posts_by_authors(&query.following_ids, self.per_source_limit, self.max_age_hours)
+            .get_posts_by_authors(
+                &query.following_ids,
+                self.per_source_limit,
+                self.max_age_hours,
+            )
             .await
             .map_err(|e| FeedError::new("Source", "FollowingSource", e))?;
 

@@ -205,7 +205,11 @@ impl std::fmt::Display for FeedError {
 impl std::error::Error for FeedError {}
 
 impl FeedError {
-    pub fn new(stage: impl Into<String>, component: impl Into<String>, msg: impl Into<String>) -> Self {
+    pub fn new(
+        stage: impl Into<String>,
+        component: impl Into<String>,
+        msg: impl Into<String>,
+    ) -> Self {
         Self {
             stage: stage.into(),
             component: component.into(),

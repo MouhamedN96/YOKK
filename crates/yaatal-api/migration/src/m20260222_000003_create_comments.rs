@@ -13,7 +13,12 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Comments::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(Comments::Id).string().not_null().primary_key())
+                    .col(
+                        ColumnDef::new(Comments::Id)
+                            .string()
+                            .not_null()
+                            .primary_key(),
+                    )
                     .col(ColumnDef::new(Comments::PostId).string().not_null())
                     .col(ColumnDef::new(Comments::AuthorId).string().not_null())
                     .col(ColumnDef::new(Comments::ParentId).string().null())

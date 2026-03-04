@@ -1,6 +1,6 @@
 #![allow(clippy::unused_async)]
+use axum::{extract::State, response::IntoResponse, routing::post, Form};
 use loco_rs::prelude::*;
-use axum::{extract::State, routing::post, Form, response::IntoResponse};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -31,7 +31,11 @@ pub async fn ussd_webhook(
     State(_ctx): State<AppContext>,
     Form(payload): Form<UssdRequest>,
 ) -> impl IntoResponse {
-    tracing::info!("Received USSD from {}: {}", payload.phone_number, payload.text);
+    tracing::info!(
+        "Received USSD from {}: {}",
+        payload.phone_number,
+        payload.text
+    );
 
     let response = if payload.text.is_empty() {
         // Initial dial.
@@ -55,7 +59,11 @@ pub async fn sms_webhook(
     State(_ctx): State<AppContext>,
     Form(payload): Form<SmsRequest>,
 ) -> Result<Response> {
-    tracing::info!("Received SMS offline post from {}: {}", payload.from, payload.text);
+    tracing::info!(
+        "Received SMS offline post from {}: {}",
+        payload.from,
+        payload.text
+    );
     // TODO(#E7): Save SMS content as a Post in the database via yaatal-core.
     format::empty()
 }

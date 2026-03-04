@@ -44,10 +44,7 @@ impl FeedPostRepository for SeaOrmPostRepository {
             .await
             .map_err(|e| format!("Failed to fetch posts: {}", e))?;
 
-        let candidates = posts
-            .into_iter()
-            .map(|p| model_to_candidate(&p))
-            .collect();
+        let candidates = posts.into_iter().map(|p| model_to_candidate(&p)).collect();
 
         Ok(candidates)
     }

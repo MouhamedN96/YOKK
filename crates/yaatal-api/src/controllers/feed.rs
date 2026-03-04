@@ -7,8 +7,8 @@ use axum::extract::Query;
 use loco_rs::prelude::*;
 use serde::Deserialize;
 use std::sync::Arc;
-use yaatal_feed::{FeedBuilder, FeedQuery};
 use yaatal_feed::weights::WeightConfig;
+use yaatal_feed::{FeedBuilder, FeedQuery};
 
 use crate::{
     services::profile_identity,
@@ -129,7 +129,5 @@ async fn get_feed(
 
 /// Register feed routes.
 pub fn routes() -> Routes {
-    Routes::new()
-        .prefix("api/feed")
-        .add("/", get(get_feed))
+    Routes::new().prefix("api/feed").add("/", get(get_feed))
 }

@@ -71,7 +71,7 @@ App-specific code goes in `apps/` ONLY.
 | E3 | AI cascade router | DONE | e3-ai-router |
 | E4 | JWT auth controller (Loco) | DONE | e4-jwt-auth |
 | E5 | Posts CRUD + feed | DONE | e5-posts-feed |
-| E6 | Voice crate | NOT STARTED | e6-voice-crate |
+| E6 | Voice crate | IN PROGRESS | e6-voice-crate |
 | E7 | Kill gate (Dioxus+cpal) | NOT STARTED | e7-kill-gate |
 | E8 | Wire YOKK PWA | NOT STARTED | e8-wire-pwa |
 
@@ -566,6 +566,52 @@ App-specific code goes in `apps/` ONLY.
 - E7 (Kill gate) — Dioxus + cpal voice recording demo
 **Blockers:**
 - Pre-existing test database migration issue (`profiles.user_id` UNIQUE column conflict) — requires test DB reset or migration fix
+
+### Session 023 — 2026-02-28 (E6 Voice Crate Audit + Code-Docs Alignment)
+**Architect:** Claude Opus 4.6
+**What happened:**
+- Full audit of entire workspace comparing code against ARCHITECT-ENGINE.md Sessions 000-022
+- Found 7 discrepancies (D1-D7), applied fixes on `e6-voice-crate` branch:
+- **D1 — capture.rs (Session 005 compliance):**
+  - Added `LockPoisoned` error variant to `CaptureError`
+  - Replaced `unwrap()` on mutex lock in `stop()` with `map_err` → `CaptureError::LockPoisoned`
+  - Added accessor methods: `is_recording()`, `sample_count()`, `sample_rate()`, `channels()`
+  - Added `clear()` returning `Result<(), CaptureError>`
+  - Added device config mismatch warning in `start()`
+  - Stored `sample_rate` and `channels` at construction time
+  - Suppressed dead_code warning on `host` field
+- **D2 — compress.rs (16-bit PCM for Whisper compatibility):**
+  - Changed WAV encoding from 32-bit float to 16-bit PCM (`bits_per_sample: 16, SampleFormat::Int`)
+  - Added `f32_to_i16()` clamping function to prevent overflow
+  - Added 3 tests: WAV header validation, f32 clamping/overflow, empty samples
+- **D3 — transcribe.rs (full rewrite per Session 005 spec):**
+  - Removed `candle_core::Error` import (non-compiling dependency)
+  - Replaced 3-variant `TranscribeError` with 4-variant `TranscriptionError` (Network, Api, ModelLoading, EmptyResult)
+  - Added `TranscriptionResult` struct with `text`, `duration_ms`, `model` fields
+  - Added `transcribe_with_model()` for model selection
+  - Implemented cloud path with proper HuggingFace API call, 30s timeout, HF 503 handling
+  - Local path returns graceful error instead of stub string
+  - Added 4 tests: error display variants, offline routing
+- **D4 — voice Cargo.toml (dependency cleanup):**
+  - Removed `candle-core`, `candle-nn`, `candle-transformers`, `hf-hub` (non-optional, non-compiling deps)
+  - Made `cpal` optional behind `edge` feature: `cpal = { version = "0.15", optional = true }`
+  - Added `[features] default = [] edge = ["dep:cpal"]` section
+  - Added `[lints] workspace = true`
+- **D5 — voice controller:**
+  - Updated to use `TranscriptionResult.text` instead of raw `String` return
+- **D6 — workspace clippy lints:**
+  - Added `[workspace.lints.clippy]` to root `Cargo.toml` with correctness (deny), suspicious/complexity/style/perf (warn), and specific rules (unwrap_used, expect_used, panic, todo, dbg_macro, print_stdout/stderr, clone_on_ref_ptr, needless_pass_by_value, large_futures)
+  - Added `[lints] workspace = true` to all 7 crate Cargo.tomls: yaatal-core, yaatal-api, yaatal-feed, yaatal-voice, yaatal-search, yokk-mobile, migration
+- **D7 — ARCHITECT-ENGINE.md:**
+  - Updated E6 phase status to IN PROGRESS
+  - Added this Session 023 entry
+**What's next:**
+- Run `cargo check -p yaatal-voice` to verify voice crate compiles
+- Run `cargo check --workspace` for full workspace verification
+- Commit all changes on `e6-voice-crate` branch
+**Blockers:**
+- `libsql-ffi` build script requires GNU `cp` in PATH (use `$env:CARGO_TARGET_DIR = "$env:TEMP\yaatal-target2"` workaround)
+
 ---
 
 ## END SESSION PROTOCOL

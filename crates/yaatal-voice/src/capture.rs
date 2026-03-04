@@ -19,17 +19,23 @@ pub enum CaptureError {
     AlreadyRecording,
     #[error("Stream is not recording")]
     NotRecording,
+    #[error("Internal lock poisoned")]
+    LockPoisoned,
 }
 
 /// A service to capture audio from the microphone using standard `cpal`.
+///
+/// Captures raw f32 PCM samples from the default input device.
+/// Use [`compress::encode_wav`] to convert the output to 16-bit PCM WAV
+/// for Whisper API compatibility.
 pub struct VoiceRecorder {
+    #[allow(dead_code)]
     host: cpal::Host,
     device: cpal::Device,
-    // Store the stream so we can pause/play it, and a buffer to hold the raw PCM data.
-    // In a real app, this buffer grows over time, so we must cap it or compress it on the fly.
-    // For now, it holds the raw raw f32 samples.
     buffer: Arc<Mutex<Vec<f32>>>,
     stream: Option<cpal::Stream>,
+    sample_rate: u32,
+    channels: u16,
 }
 
 impl VoiceRecorder {
@@ -37,13 +43,46 @@ impl VoiceRecorder {
     pub fn new() -> Result<Self, CaptureError> {
         let host = cpal::default_host();
         let device = host.default_input_device().ok_or(CaptureError::NoDevice)?;
+        let default_config = device.default_input_config()?;
+        let sample_rate = default_config.sample_rate().0;
+        let channels = default_config.channels();
 
         Ok(Self {
             host,
             device,
             buffer: Arc::new(Mutex::new(Vec::new())),
             stream: None,
+            sample_rate,
+            channels,
         })
+    }
+
+    /// Returns `true` if currently recording.
+    pub fn is_recording(&self) -> bool {
+        self.stream.is_some()
+    }
+
+    /// Returns the number of samples captured so far.
+    pub fn sample_count(&self) -> Result<usize, CaptureError> {
+        let buf = self.buffer.lock().map_err(|_| CaptureError::LockPoisoned)?;
+        Ok(buf.len())
+    }
+
+    /// Returns the sample rate (Hz) of the input device.
+    pub fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+
+    /// Returns the number of audio channels.
+    pub fn channels(&self) -> u16 {
+        self.channels
+    }
+
+    /// Clears the internal sample buffer without stopping recording.
+    pub fn clear(&mut self) -> Result<(), CaptureError> {
+        let mut buf = self.buffer.lock().map_err(|_| CaptureError::LockPoisoned)?;
+        buf.clear();
+        Ok(())
     }
 
     /// Starts recording audio into the internal buffer.
@@ -52,14 +91,23 @@ impl VoiceRecorder {
             return Err(CaptureError::AlreadyRecording);
         }
 
-        // Use a standard config (e.g., mono, 16kHz) to keep file size small
         let config = self.device.default_input_config()?;
         let sample_format = config.sample_format();
-        let config: cpal::StreamConfig = config.into();
 
+        // Warn if device config differs from what we stored at construction time
+        if config.sample_rate().0 != self.sample_rate || config.channels() != self.channels {
+            tracing::warn!(
+                "Device config mismatch: expected {}Hz/{}ch, got {}Hz/{}ch",
+                self.sample_rate,
+                self.channels,
+                config.sample_rate().0,
+                config.channels()
+            );
+        }
+
+        let config: cpal::StreamConfig = config.into();
         let buffer_clone = Arc::clone(&self.buffer);
 
-        // A simple callback that pushes samples into our buffer.
         let err_fn = move |err| {
             tracing::error!("an error occurred on stream: {}", err);
         };
@@ -73,9 +121,8 @@ impl VoiceRecorder {
                     }
                 },
                 err_fn,
-                None, // Use default timeout
+                None,
             )?,
-            // Fallback for i16 and u16 are omitted for brevity, but would be matched here
             _ => {
                 return Err(CaptureError::BuildStreamError(
                     cpal::BuildStreamError::FormatNotSupported,
@@ -89,12 +136,14 @@ impl VoiceRecorder {
         Ok(())
     }
 
-    /// Stops recording and returns the raw PCM buffer.
+    /// Stops recording and returns the raw f32 PCM buffer.
     pub fn stop(&mut self) -> Result<Vec<f32>, CaptureError> {
         if let Some(stream) = self.stream.take() {
             stream.pause()?;
-            // Take the buffer's contents and clear it for the next recording
-            let mut buf = self.buffer.lock().unwrap();
+            let mut buf = self
+                .buffer
+                .lock()
+                .map_err(|_| CaptureError::LockPoisoned)?;
             let data = std::mem::take(&mut *buf);
             Ok(data)
         } else {

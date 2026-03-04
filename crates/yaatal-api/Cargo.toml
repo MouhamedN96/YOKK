@@ -7,6 +7,9 @@ publish = false
 default-run = "yaatal_api-cli"
 description = "Loco-based HTTP backend for Yaatal Engine"
 
+[lints]
+workspace = true
+
 [dependencies]
 yaatal-core = { path = "../yaatal-core" }
 yaatal-feed = { path = "../yaatal-feed" }

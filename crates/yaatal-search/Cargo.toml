@@ -5,6 +5,9 @@ edition.workspace = true
 license.workspace = true
 description = "ColBERT search and retrieval for Yaatal Engine (future)"
 
+[lints]
+workspace = true
+
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true

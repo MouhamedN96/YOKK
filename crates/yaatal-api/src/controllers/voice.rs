@@ -15,11 +15,13 @@ pub async fn transcribe(
 ) -> Result<Response> {
     // Route the incoming audio bytes through the E6 transcription engine.
     // passing false defaults to Cloud routing when online, fallback to Candle when offline.
-    let text = TranscriptionRouter::transcribe(&body, false)
+    let result = TranscriptionRouter::transcribe(&body, false)
         .await
         .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
-    format::json(TranscribeResponse { transcription: text })
+    format::json(TranscribeResponse {
+        transcription: result.text,
+    })
 }
 
 pub fn routes() -> Routes {

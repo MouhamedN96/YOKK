@@ -5,6 +5,9 @@ edition.workspace = true
 license.workspace = true
 description = "Generic Feed Pipeline"
 
+[lints]
+workspace = true
+
 [dependencies]
 yaatal-core = { path = "../yaatal-core" }
 

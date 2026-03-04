@@ -46,9 +46,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cargo check
-        run: |
-          unset LD_LIBRARY_PATH
-          cargo check --workspace
+        run: env -u LD_LIBRARY_PATH cargo check --workspace
 
   clippy:
     runs-on: ubuntu-latest
@@ -62,9 +60,7 @@ jobs:
           components: clippy
 
       - name: Cargo clippy
-        run: |
-          unset LD_LIBRARY_PATH
-          cargo clippy --workspace --all-targets -- -D warnings
+        run: env -u LD_LIBRARY_PATH cargo clippy --workspace --all-targets -- -D warnings
 
   test:
     runs-on: ubuntu-latest
@@ -76,9 +72,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cargo test
-        run: |
-          unset LD_LIBRARY_PATH
-          cargo test --workspace -- --test-threads=1
+        run: env -u LD_LIBRARY_PATH cargo test --workspace -- --test-threads=1
 
   windows-stability:
     runs-on: windows-latest

@@ -32,5 +32,8 @@ Thumbs.db
 # Test artifacts
 /coverage
 
+# Local cargo config (Windows-specific paths break Linux CI)
+/.cargo/config.toml
+
 # Local cargo cache override
 /.local-cargo-home

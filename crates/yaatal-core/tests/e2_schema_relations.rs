@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use sea_orm::{
     ActiveModelTrait, ConnectionTrait, Database, DatabaseBackend, EntityTrait, ModelTrait, Set,
     Statement,
@@ -35,6 +36,7 @@ async fn setup_db() -> sea_orm::DatabaseConnection {
 fn profile_active(id: &str) -> profile::ActiveModel {
     profile::ActiveModel {
         id: Set(id.to_owned()),
+        user_id: Set(None),
         username: Set(Some(format!("user-{id}"))),
         display_name: Set(Some(format!("User {id}"))),
         bio: Set(Some("bio".to_owned())),
@@ -46,7 +48,7 @@ fn profile_active(id: &str) -> profile::ActiveModel {
         interests: Set(None),
         onboarding_complete: Set(0),
         created_at: Set(TS.to_owned()),
-        updated_at: Set(Some(TS.to_owned())),
+        updated_at: Set(TS.to_owned()),
     }
 }
 
@@ -63,7 +65,7 @@ fn post_active(id: &str, author_id: &str) -> post::ActiveModel {
         comment_count: Set(0),
         is_pinned: Set(0),
         created_at: Set(TS.to_owned()),
-        updated_at: Set(Some(TS.to_owned())),
+        updated_at: Set(TS.to_owned()),
     }
 }
 

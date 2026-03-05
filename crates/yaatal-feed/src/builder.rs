@@ -61,8 +61,8 @@ impl FeedBuilder {
         // Scorers (run sequentially — order matters)
         let scorers: Vec<Box<dyn Scorer<FeedQuery, FeedCandidate>>> = vec![
             Box::new(RecencyScorer::default()), // baseline engagement prediction
-            Box::new(WeightedScorer::new(config.clone())), // combine predictions into score
-            Box::new(AuthorDiversityScorer::new(config.clone())), // prevent feed domination
+            Box::new(WeightedScorer::new(config)), // combine predictions into score
+            Box::new(AuthorDiversityScorer::new(config)), // prevent feed domination
         ];
 
         // Selector

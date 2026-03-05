@@ -53,6 +53,7 @@ pub fn encode_opus(_samples: &[f32]) -> Result<Vec<u8>, CompressError> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

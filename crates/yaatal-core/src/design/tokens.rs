@@ -27,6 +27,7 @@ pub const ADINKRA_FIHANKRA: &str = "\u{25C8}";
 pub const ADINKRA_MPATAPO: &str = "\u{26AF}";
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     const _: () = assert!(TOUCH_TARGET_MIN >= 44);

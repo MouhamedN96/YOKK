@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::print_stdout)]
 // yaatal-feed/tests/pipeline_test.rs
 //
 // End-to-end test: mock repos → pipeline → ranked feed output.
@@ -6,7 +7,6 @@ use async_trait::async_trait;
 use chrono::Utc;
 use std::sync::Arc;
 use yaatal_feed::builder::FeedBuilder;
-use yaatal_feed::pipeline::executor::FeedPipeline;
 use yaatal_feed::sources::discovery_source::DiscoveryRepository;
 use yaatal_feed::sources::following_source::PostRepository;
 use yaatal_feed::types::*;

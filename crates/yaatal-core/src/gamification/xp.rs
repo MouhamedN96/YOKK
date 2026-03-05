@@ -111,6 +111,7 @@ pub fn level_progress(xp: u32) -> f32 {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

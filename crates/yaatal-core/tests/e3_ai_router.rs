@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! E3 — AI cascade router deterministic tests.
 //!
 //! These tests use mock network gates and no real HTTP calls.

@@ -2,6 +2,7 @@
 use loco_rs::{cli::playground, prelude::*};
 use yaatal_api::app::App;
 
+#[allow(clippy::print_stdout)]
 #[tokio::main]
 async fn main() -> loco_rs::Result<()> {
     let _ctx = playground::<App>().await?;

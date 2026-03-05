@@ -103,15 +103,15 @@ where
         // 8. Fire side effects (non-blocking)
         let arc_query = Arc::new(hydrated_query);
         let input = Arc::new(SideEffectInput {
-            query: arc_query.clone(),
+            query: Arc::clone(&arc_query),
             selected_candidates: final_candidates.clone(),
         });
-        let side_effects = self.side_effects.clone();
+        let side_effects = Arc::clone(&self.side_effects);
         tokio::spawn(async move {
             let futures = side_effects
                 .iter()
                 .filter(|se| se.enable(&input.query))
-                .map(|se| se.run(input.clone()));
+                .map(|se| se.run(Arc::clone(&input)));
             let _ = join_all(futures).await;
         });
 

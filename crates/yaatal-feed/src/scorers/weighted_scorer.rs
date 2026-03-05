@@ -8,16 +8,9 @@ use crate::types::*;
 use crate::weights::WeightConfig;
 use async_trait::async_trait;
 
+#[derive(Default)]
 pub struct WeightedScorer {
     pub config: WeightConfig,
-}
-
-impl Default for WeightedScorer {
-    fn default() -> Self {
-        Self {
-            config: WeightConfig::default(),
-        }
-    }
 }
 
 impl WeightedScorer {

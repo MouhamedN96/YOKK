@@ -11,16 +11,9 @@ use async_trait::async_trait;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
+#[derive(Default)]
 pub struct AuthorDiversityScorer {
     config: WeightConfig,
-}
-
-impl Default for AuthorDiversityScorer {
-    fn default() -> Self {
-        Self {
-            config: WeightConfig::default(),
-        }
-    }
 }
 
 impl AuthorDiversityScorer {

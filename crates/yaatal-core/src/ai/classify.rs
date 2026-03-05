@@ -44,6 +44,7 @@ pub fn classify_task(text: &str) -> (AiTask, &'static str) {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

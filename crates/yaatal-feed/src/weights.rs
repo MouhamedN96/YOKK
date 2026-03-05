@@ -5,7 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct WeightConfig {
     // ─── Positive Weights ──────────────────────────────────────────────
     pub listen_weight: f64,

@@ -15,6 +15,7 @@ use yaatal_core::models::profile;
 
 pub static EMAIL_DOMAIN_RE: OnceLock<Regex> = OnceLock::new();
 
+#[allow(clippy::expect_used)]
 fn get_allow_email_domain_re() -> &'static Regex {
     EMAIL_DOMAIN_RE.get_or_init(|| {
         Regex::new(r"@example\.com$|@gmail\.com$").expect("Failed to compile regex")

@@ -9,7 +9,8 @@ description = "YOKK mobile app — Dioxus frontend"
 workspace = true
 
 [dependencies]
-yaatal-core = { path = "../../crates/yaatal-core" }
-yaatal-voice = { path = "../../crates/yaatal-voice" }
+dioxus = { version = "0.7", features = ["desktop", "router"] }
+dioxus-logger = "0.7.3"
+log = "0.4.29"
 serde.workspace = true
 tokio.workspace = true

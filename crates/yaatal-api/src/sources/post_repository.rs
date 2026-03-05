@@ -5,7 +5,6 @@ use chrono::{DateTime, Utc};
 use loco_rs::prelude::*;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
 use yaatal_core::models::post;
-use yaatal_core::models::post::PostType;
 use yaatal_feed::sources::following_source::PostRepository as FeedPostRepository;
 use yaatal_feed::types::{ContentType, FeedCandidate};
 
@@ -58,11 +57,8 @@ fn model_to_candidate(post: &post::Model) -> FeedCandidate {
         .map(|dt| dt.with_timezone(&Utc));
 
     // Determine content type based on post metadata
-    let content_type = if post.r#type == PostType::Question {
-        ContentType::Text
-    } else {
-        ContentType::Text
-    };
+    // TODO: map PostType variants to distinct ContentType once voice/commerce types land
+    let content_type = ContentType::Text;
 
     FeedCandidate {
         id: post.id.clone(),

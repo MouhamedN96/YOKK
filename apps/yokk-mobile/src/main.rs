@@ -4,7 +4,11 @@ use dioxus::prelude::*;
 use dioxus_logger::tracing::Level;
 
 mod components;
-use components::layout::{header::Header, sidebar::Sidebar};
+mod models;
+
+use components::feed::{hero::FeedHero, post_card::PostCard};
+use components::layout::{create_drawer::CreateDrawer, header::Header, sidebar::Sidebar};
+use models::feed::FeedItem;
 
 #[derive(Routable, Clone, Debug, PartialEq)]
 enum Route {
@@ -26,7 +30,14 @@ enum Route {
 }
 
 pub fn App() -> Element {
+    use_context_provider(|| Signal::new("dark".to_string()));
+
     rsx! {
+        document::Link { rel: "stylesheet", href: asset!("/assets/tailwind.css") }
+        document::Link { rel: "preconnect", href: "https://fonts.googleapis.com" }
+        document::Link { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "anonymous" }
+        document::Link { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Grotesk:wght@300..700&display=swap" }
+
         Router::<Route> {}
     }
 }
@@ -34,10 +45,12 @@ pub fn App() -> Element {
 #[component]
 fn MainLayout() -> Element {
     let mut is_sidebar_open = use_signal(|| false);
+    let mut is_create_drawer_open = use_signal(|| false);
+    let theme = use_context::<Signal<String>>();
 
     rsx! {
         div {
-            class: "min-h-screen bg-charcoal-base text-clay-white flex flex-col font-body",
+            class: "{theme} min-h-screen bg-background text-primary flex flex-col font-body",
 
             Header {
                 on_menu_click: move |_| {
@@ -50,12 +63,23 @@ fn MainLayout() -> Element {
                     is_open: is_sidebar_open(),
                     on_close: move |_| {
                         is_sidebar_open.set(false);
+                    },
+                    on_new_post: move |_| {
+                        if is_sidebar_open() {
+                            is_sidebar_open.set(false);
+                        }
+                        is_create_drawer_open.set(true);
                     }
                 }
 
-                main { class: "flex-1 w-full min-w-0 bg-charcoal-base z-10",
+                main { class: "flex-1 w-full min-w-0 bg-background z-10",
                     Outlet::<Route> {}
                 }
+            }
+
+            CreateDrawer {
+                is_open: is_create_drawer_open(),
+                on_close: move |_| is_create_drawer_open.set(false),
             }
         }
     }
@@ -64,10 +88,19 @@ fn MainLayout() -> Element {
 // Stub pages
 #[component]
 fn Home() -> Element {
+    let mock_feed = FeedItem::mock_data();
+
     rsx! {
-        div { class: "p-8",
-            h1 { class: "text-h1 font-heading text-clay-white mb-4", "Welcome to YOKK" }
-            p { class: "text-body text-clay-white/70", "The community platform for African builders." }
+        div { class: "w-full overflow-y-auto pb-20 lg:pb-8",
+            // The Premium Afro-futurist Hero Banner
+            FeedHero {}
+
+            // The Dynamic Feed Items (PostCards + AI Summaries + Launches)
+            div { class: "max-w-4xl mx-auto px-4 sm:px-6 mt-6 sm:mt-8 flex flex-col gap-6",
+                for item in mock_feed {
+                    PostCard { key: "{item.id}", post: item }
+                }
+            }
         }
     }
 }

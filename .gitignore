@@ -37,4 +37,20 @@ Thumbs.db
 
 # Local cargo cache override
 /.local-cargo-home
+/.local-cargo-home-test
+
+# Node
+node_modules/
+
+# Build artifacts & scratch files
+**/build_error*.txt
+**/dist/
+**/target/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Dioxus
+.dioxus/
 

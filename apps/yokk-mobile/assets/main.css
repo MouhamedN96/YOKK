@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-background: #FAF8F5;
+    --bg-surface: #FFFFFF;
+    --text-primary: #1F1F1F;
+    --text-secondary: rgba(31, 31, 31, 0.6);
+    --border-divider: rgba(31, 31, 31, 0.08);
+  }
+
+  .dark {
+    --bg-background: #111111;
+    --bg-surface: #1A1A1A;
+    --text-primary: #FAF8F5;
+    --text-secondary: rgba(250, 248, 245, 0.6);
+    --border-divider: rgba(250, 248, 245, 0.1);
+  }
+
+  * {
+    @apply border-divider;
+  }
+
+  body {
+    @apply bg-background text-primary antialiased font-body font-light transition-colors duration-300;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-surface/80 backdrop-blur-xl border border-divider;
+  }
+
+  .glass-card {
+    @apply bg-surface border border-divider hover:shadow-lg transition-all duration-300;
+  }
+
+  /* Animated Border Gradient */
+  .animated-border {
+    position: relative;
+    border-radius: theme('borderRadius.lg');
+  }
+
+  .animated-border::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: calc(theme('borderRadius.lg') + 2px);
+    background: linear-gradient(135deg,
+        theme('colors.terracotta.primary'),
+        theme('colors.indigo.deep'),
+        theme('colors.savanna.gold'));
+    z-index: -1;
+    animation: border-rotate 4s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .animated-border:hover::before {
+    opacity: 1;
+  }
+
+  /* Typography utilities */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-terracotta-primary to-savanna-gold;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes border-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}

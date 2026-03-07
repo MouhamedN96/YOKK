@@ -1,0 +1,2 @@
+Iteration log
+See SPRINT-LOG.md for full project history. This file tracks automated ralph-loop iterations only.

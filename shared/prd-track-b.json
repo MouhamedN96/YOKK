@@ -1,0 +1,52 @@
+{
+  "track": "B",
+  "name": "Implementations — update 12 concrete impls for new trait signatures",
+  "prerequisite": "Track A must complete feed-p3 before this track starts. The new trait signatures must exist.",
+  "stories": [
+    {
+      "id": "feed-p4a",
+      "title": "Update 5 filters: return FilterBitmap, take &[C]",
+      "frontend": false,
+      "acceptance_criteria": [
+        "5 filters return FilterBitmap instead of FilterResult",
+        "5 filters take &[C] instead of Vec<C>",
+        "Each filter compiles individually",
+        "cargo check -p yaatal-feed passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "feed-p4b",
+      "title": "Make TopKSelector async",
+      "frontend": false,
+      "acceptance_criteria": [
+        "TopKSelector implements async Selector trait",
+        "Existing selection logic preserved",
+        "cargo check -p yaatal-feed passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "feed-p4c",
+      "title": "Update sources and scorers for Identifiable bound",
+      "frontend": false,
+      "acceptance_criteria": [
+        "2 sources have C: Identifiable bound",
+        "3 scorers have C: Identifiable bound",
+        "cargo check -p yaatal-feed passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "feed-p4d",
+      "title": "Wire FeedBuilder with PipelineConfig and split side effects",
+      "frontend": false,
+      "acceptance_criteria": [
+        "FeedBuilder wires new PipelineConfig",
+        "FeedBuilder uses CriticalSideEffect + BestEffortSideEffect split",
+        "cargo check -p yaatal-feed passes"
+      ],
+      "passes": false
+    }
+  ]
+}

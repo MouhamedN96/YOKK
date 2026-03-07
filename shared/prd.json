@@ -1,0 +1,93 @@
+{
+  "stories": [
+    {
+      "id": "feed-p1",
+      "title": "Fix v0.2 compile errors in reference prototype",
+      "frontend": false,
+      "acceptance_criteria": [
+        "cargo check passes in v0.2 zip directory",
+        "Zero errors, zero warnings",
+        "timeout scope fixed in executor.rs run_filters()",
+        "be_request_id move fixed in executor.rs best-effort spawn",
+        "Unused imports/vars cleaned"
+      ],
+      "passes": false
+    },
+    {
+      "id": "feed-p2",
+      "title": "Genericize types — keep v0.1 generics, add ingestion types",
+      "frontend": false,
+      "acceptance_criteria": [
+        "FeedQuery and FeedCandidate unchanged (v0.1 generics)",
+        "IngestionQuery added with run_id, timestamp, last_run, ai_budget_remaining",
+        "RawArticle added with content_hash, ai_summary, enriched fields",
+        "FeedItem and SourceState structs added",
+        "WeightConfig gains ingestion_keep_per_category and max_enrichments_per_cycle",
+        "impl Identifiable for FeedCandidate",
+        "impl Identifiable for RawArticle",
+        "cargo check -p yaatal-feed passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "feed-p3",
+      "title": "Merge hardened traits and 10-stage executor",
+      "frontend": false,
+      "acceptance_criteria": [
+        "Identifiable trait added to pipeline::traits",
+        "All async traits gain fn timeout() with defaults",
+        "Filter signature changed to &[C] -> FilterBitmap",
+        "Selector made async",
+        "SideEffect split into CriticalSideEffect + BestEffortSideEffect",
+        "Deduplicator trait added",
+        "ErrorKind enum added with is_retryable()",
+        "Executor replaced with 10-stage pipeline (buffer_unordered, dedup, bitmap filter)",
+        "PipelineConfig and PipelineStats added",
+        "circuit_breaker.rs added with 3 tests",
+        "cursor.rs added with FeedCursor encode/decode",
+        "cargo check -p yaatal-feed passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "feed-p4",
+      "title": "Update 12 concrete implementations for new trait signatures",
+      "frontend": false,
+      "acceptance_criteria": [
+        "5 filters return FilterBitmap instead of FilterResult",
+        "5 filters take &[C] instead of Vec<C>",
+        "TopKSelector is async",
+        "2 sources have C: Identifiable bound",
+        "3 scorers have C: Identifiable bound",
+        "FeedBuilder wires new PipelineConfig and split side effects",
+        "cargo check -p yaatal-feed passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "feed-p5",
+      "title": "Cargo.toml deps and module exports",
+      "frontend": false,
+      "acceptance_criteria": [
+        "blake3 and base64 added to yaatal-feed/Cargo.toml",
+        "pipeline/mod.rs exports all new types",
+        "lib.rs re-exports cover new types",
+        "cargo check -p yaatal-feed passes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "feed-p6",
+      "title": "Full verification — all build gates pass",
+      "frontend": false,
+      "acceptance_criteria": [
+        "cargo fmt --check -p yaatal-feed: zero diff",
+        "cargo check -p yaatal-feed: zero errors",
+        "cargo clippy -p yaatal-feed -- -D warnings: zero warnings",
+        "cargo test -p yaatal-feed: all pass including updated pipeline_test.rs",
+        "cargo check (full workspace): no cross-crate breakage"
+      ],
+      "passes": false
+    }
+  ]
+}

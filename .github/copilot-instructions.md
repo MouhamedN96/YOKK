@@ -13,3 +13,7 @@ Review priorities:
 - API compatibility
 - missing tests
 - maintainability over cleverness
+
+Default model guidance:
+- Track A / architecture work: Claude Opus 4.6
+- Track B repetitive edits: Codex, then Opus 4.6 for review/wiring

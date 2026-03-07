@@ -41,4 +41,4 @@ Each story touches specific files. Don't refactor unrelated code.
 - P4d: FeedBuilder / pipeline wiring only
 
 ## Model recommendation
-Use **Codex** for P4a (repetitive filter changes) and **Claude Opus** for P4d (complex wiring).
+Use **Codex** for P4a (repetitive filter changes) and **Claude Opus 4.6** for P4d (complex wiring).

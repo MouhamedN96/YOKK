@@ -39,4 +39,4 @@ Signal by checking that `feed-p3.passes = true` in `prd-track-a.json`.
 **P5 and P6** are blocked until Track B also completes. Check `shared/prd-track-b.json` — all stories must have `passes: true` before proceeding.
 
 ## Model recommendation
-Use **Claude Opus** — this track requires deep architectural judgment.
+Use **Claude Opus 4.6** — this track requires deep architectural judgment.

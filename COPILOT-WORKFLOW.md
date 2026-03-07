@@ -19,6 +19,10 @@ This branch provides a reusable, production-grade Copilot workflow for distribut
    - Or use `/ralph` for single-track mode
 5. **Follow the prompts** — each track reads its own `shared/prd-track-*.json` and logs progress
 
+## Model Recommendation
+- Track A analyzer: **Claude Opus 4.6** in Copilot Chat
+- Track B: Codex for repetitive updates, Claude Opus 4.6 for complex wiring
+
 ## File Structure
 ```
 .github/
@@ -54,6 +58,45 @@ shared/
 - Each `/ralph-*` prompt reads its own PRD file and only advances when dependencies are met
 - Progress is logged to `shared/progress.txt`
 - All rules and gotchas are enforced via `ARCHITECT.md` and `AGENTS.md`
+
+Plain-English loop model:
+- Select next story -> analyze -> build -> verify -> mark pass -> repeat until done/max iters
+
+10-line pseudocode mental model:
+
+```text
+repeat up to MAX_ITERS:
+  story = first story with passes=false
+  if no story: exit DONE
+  critique = analyze(story, diff)
+  apply_fix(story, critique)
+  if rust_gates() == PASS:
+    mark story passes=true
+    log progress
+    exit SUCCESS
+exit MAX_ITERS_EXCEEDED
+```
+
+## Common Failure Modes + Recovery
+- `Did not converge after MAX_ITERS`
+  - Rerun with higher budget: `MAX_ITERS=10 bash shared/scripts/ralph-loop.sh`
+- Rust gate failure
+  - Run gates directly for full output: `bash shared/scripts/rust-gates.sh`
+- Track B blocked by Track A
+  - Complete Track A through `feed-p3` before Track B
+- Running from wrong directory
+  - Start commands from repository root (`Yaatal-Engine/`)
+
+## Next-Session Readiness Checklist
+1. Script syntax:
+   - `bash -n shared/scripts/ralph-loop.sh`
+   - `bash -n shared/scripts/rust-gates.sh`
+2. Gate smoke check:
+   - `bash shared/scripts/rust-gates.sh fmt`
+3. Start workflow:
+   - `/ralph-a` (Track A)
+   - `/ralph-b` (Track B)
+   - `/ralph` (single-track)
 
 ## Reuse
 - Copy `.github/prompts/`, `shared/`, and `.github/copilot-instructions.md` to any Rust repo

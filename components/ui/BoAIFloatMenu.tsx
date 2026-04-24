@@ -3,7 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, RotateCcw, Copy, Check, Languages, MessageSquare, BookOpen, Volume2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { boAISpecificTask } from '@/lib/ai/hybrid-router';
+import { supabase } from '@/lib/supabase/client';
+
+const ENGINE_URL = process.env.NEXT_PUBLIC_ENGINE_URL ?? ''
+
+const ACTION_PROMPTS: Record<string, (content: string, lang?: string) => string> = {
+  summary:    (c) => `Summarize the following in 2-3 sentences:\n\n${c}`,
+  translate:  (c, lang) => `Translate the following to ${lang ?? 'English'}:\n\n${c}`,
+  explain:    (c) => `Explain the following clearly and concisely:\n\n${c}`,
+  'read-aloud': (c) => `Format this for clear spoken delivery:\n\n${c}`,
+  sentiment:  (c) => `Analyse the sentiment of the following and explain in one sentence:\n\n${c}`,
+}
 
 interface BoAIFloatMenuProps {
   content: string; // The content to process
@@ -33,38 +43,50 @@ export default function BoAIFloatMenu({
 
   const handleProcess = async () => {
     if (!content) return;
-    
     setIsProcessing(true);
     setResult('');
-    
+
     try {
-      const response = await boAISpecificTask(content, selectedAction, targetLanguage);
-      
-      // For now, we'll simulate getting the result
-      // In a real implementation, we'd consume the stream
-      let processedContent = '';
-      
-      switch (selectedAction) {
-        case 'summary':
-          processedContent = `This is a summary of the content: "${content.substring(0, 100)}...". The main points are...`;
-          break;
-        case 'translate':
-          processedContent = `[Translated to ${targetLanguage}]: ${content}`;
-          break;
-        case 'explain':
-          processedContent = `Explanation: The content "${content.substring(0, 50)}..." discusses important concepts related to...`;
-          break;
-        case 'read-aloud':
-          processedContent = `Reading aloud: ${content}`;
-          break;
-        case 'sentiment':
-          processedContent = `Sentiment analysis: The content appears to have a neutral/positive sentiment with technical focus.`;
-          break;
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const prompt = (ACTION_PROMPTS[selectedAction] ?? ACTION_PROMPTS.summary)(content, targetLanguage);
+
+      const resp = await fetch(`${ENGINE_URL}/api/ai/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
+      });
+
+      if (!resp.ok || !resp.body) throw new Error(`Engine error: ${resp.status}`);
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulated = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') break;
+          try {
+            const delta = JSON.parse(data)?.choices?.[0]?.delta?.content;
+            if (delta) { accumulated += delta; setResult(accumulated); }
+          } catch { /* partial chunk */ }
+        }
       }
-      
-      setResult(processedContent);
-      onResult(processedContent);
-    } catch (error) {
+
+      onResult(accumulated);
+    } catch {
       setResult('Error processing content. Please try again.');
     } finally {
       setIsProcessing(false);

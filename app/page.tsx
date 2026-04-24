@@ -2,44 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-// import { useChat } from 'ai/react' // TODO: Fix package export
 import { useQuery } from '@powersync/react'
-
-// Mock useChat for build stability
-const useChat = (config: any) => {
-  const [messages, setMessages] = useState<any[]>([])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-
-  const append = (msg: any) => {
-    setMessages(prev => [...prev, msg])
-    setIsLoading(true)
-    setTimeout(() => {
-      setMessages(prev => [...prev, { 
-        id: Date.now().toString(), 
-        role: 'assistant', 
-        content: "I'm Bo AI. I'm currently offline-optimized, but I'll be fully connected to Groq soon!" 
-      }])
-      setIsLoading(false)
-    }, 1000)
-  }
-
-  const handleSubmit = (e: any) => {
-    e.preventDefault()
-    if (!input.trim()) return
-    append({ role: 'user', content: input })
-    setInput('')
-  }
-
-  return {
-    messages,
-    input,
-    handleInputChange: (e: any) => setInput(e.target.value),
-    handleSubmit,
-    isLoading,
-    append
-  }
-}
+import { useBoChat } from '@/hooks/useBoChat'
 import { ModernHeroCard, type ModernHeroCardData } from '@/components/design/cards/ModernHeroCard'
 import { MobileOptimizedCard, type MobileOptimizedCardData } from '@/components/design/cards/MobileOptimizedCard'
 import { Sidebar } from '@/components/design/sidebar/Sidebar'
@@ -84,9 +48,7 @@ export default function Home() {
   const { user: authUser, profile, loading: authLoading } = useAuth()
 
   // AI Chat
-  const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
-    api: '/api/bo/chat',
-  })
+  const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useBoChat()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // PowerSync Data
